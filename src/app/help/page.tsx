@@ -2,6 +2,7 @@
 import React from "react";
 import Header from "src/components/layout/Header";
 import HelpFAQ from "src/features/help/ui/HelpFAQ";
+import DeveloperSection from "src/features/help/ui/DeveloperSection";
 
 export default function HelpPage() {
   const faqs = [
@@ -28,6 +29,8 @@ export default function HelpPage() {
       <div className="max-w-3xl mx-auto py-10 px-4">
         <h2 className="text-3xl font-bold mb-6 text-center">Помощь</h2>
         <HelpFAQ faqs={faqs} />
+        {/* Добавляем раздел "Для разработчиков" */}
+        <DeveloperSection />
       </div>
     </div>
   );
