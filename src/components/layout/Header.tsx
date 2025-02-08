@@ -36,14 +36,14 @@ export default function Header() {
       </nav>
 
       {/* Второстепенное меню */}
-      <nav className="flex items-center space-x-4">
+      <div className="space-y-4 w-full max-w-xs">
         <Link href="/settings" className="text-gray-500 hover:underline">
           Настройки
         </Link>
         <Link href="/help" className="text-gray-500 hover:underline">
           Помощь
         </Link>
-      </nav>
+      </div>
     </header>
   );
 }
