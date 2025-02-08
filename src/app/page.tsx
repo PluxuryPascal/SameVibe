@@ -9,7 +9,9 @@ export default function HomePage() {
       <div className="mb-8">
         <Logo />
       </div>
-      <h1 className="text-3xl font-bold mb-6">Добро пожаловать в SameVibe</h1>
+      <h1 className="text-3xl font-bold mb-6">
+        Заводите знакомства в SameVibe
+      </h1>
       <div className="space-x-4">
         <Link href="/auth/login" passHref>
           <Button>Вход</Button>
