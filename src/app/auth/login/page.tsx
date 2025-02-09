@@ -6,7 +6,7 @@ import Button from "src/components/ui/Button";
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+    <div className="min-h-screen flex items-center justify-center px-4">
       <div className="grid grid-cols-2 gap-8 w-full max-w-6xl">
         {/* Левая колонка с логотипом */}
         <div className="flex items-center justify-center">

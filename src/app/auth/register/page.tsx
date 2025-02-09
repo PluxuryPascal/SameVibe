@@ -7,7 +7,7 @@ import Button from "src/components/ui/Button";
 export default function RegisterPage() {
   // Здесь можно подключить бизнес-логику регистрации (например, useAuth или другой хук)
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+    <div className="min-h-screen flex items-center justify-center  px-4">
       <div className="grid grid-cols-2 gap-8 w-full max-w-6xl">
         {/* Передаём нужные размеры, например, 600×600 */}
         <div className="flex items-center justify-center">

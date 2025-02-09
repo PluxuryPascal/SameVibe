@@ -52,7 +52,22 @@ export default {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      keyframes: {
+        gradient: {
+          '0%, 100%': {
+            backgroundSize: '100% 100%',
+            backgroundPosition: 'center',
+          },
+          '50%': {
+            backgroundSize: '150% 150%',
+            backgroundPosition: 'center',
+          },
+        },
+      },
+      animation: {
+        gradient: 'gradient 5s ease-in-out infinite',
+      },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [],
 } satisfies Config;
