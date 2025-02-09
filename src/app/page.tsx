@@ -12,10 +12,10 @@ export default function HomePage() {
       </h1>
       <div className=" flex  items-center justify-center space-x-4 w-full max-w-xs ">
         <Link href="/auth/login" passHref>
-          <Button className="flex-1">Вход</Button>
+          <Button className="flex-1 w-52">Вход</Button>
         </Link>
         <Link href="/auth/register" passHref>
-          <Button className="flex-1">Регистрация</Button>
+          <Button className="flex-1 w-52">Регистрация</Button>
         </Link>
       </div>
     </div>

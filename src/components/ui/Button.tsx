@@ -9,7 +9,7 @@ export default function Button({ children, className, ...props }: ButtonProps) {
   return (
     <button
       {...props}
-      className={`min-w-[200px] flex items-center justify-center bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-colors ${className}`}
+      className={`w-full flex items-center justify-center bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-colors ${className}`}
     >
       {children}
     </button>
