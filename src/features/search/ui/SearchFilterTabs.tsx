@@ -15,7 +15,7 @@ export default function SearchFilterTabs({
     <div className="flex space-x-4 mb-4">
       <button
         onClick={() => onSelectCategory("interests")}
-        className={`px-4 py-2 rounded ${
+        className={`flex-1 px-4 py-2 rounded ${
           currentCategory === "interests"
             ? "bg-blue-500 text-white"
             : "bg-gray-200 text-gray-800"
@@ -25,7 +25,7 @@ export default function SearchFilterTabs({
       </button>
       <button
         onClick={() => onSelectCategory("hobbies")}
-        className={`px-4 py-2 rounded ${
+        className={`flex-1 px-4 py-2 rounded ${
           currentCategory === "hobbies"
             ? "bg-blue-500 text-white"
             : "bg-gray-200 text-gray-800"
@@ -35,7 +35,7 @@ export default function SearchFilterTabs({
       </button>
       <button
         onClick={() => onSelectCategory("music")}
-        className={`px-4 py-2 rounded ${
+        className={`flex-1 px-4 py-2 rounded ${
           currentCategory === "music"
             ? "bg-blue-500 text-white"
             : "bg-gray-200 text-gray-800"

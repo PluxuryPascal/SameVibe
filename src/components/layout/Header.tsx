@@ -36,13 +36,17 @@ export default function Header() {
       </nav>
 
       {/* Второстепенное меню */}
-      <div className="space-y-4 w-full max-w-xs">
-        <Link href="/settings" className="text-gray-500 hover:underline">
-          Настройки
-        </Link>
-        <Link href="/help" className="text-gray-500 hover:underline">
-          Помощь
-        </Link>
+      <div className="space-y-2 text-right">
+        <div>
+          <Link href="/settings" className="text-gray-500 hover:underline">
+            Настройки
+          </Link>
+        </div>
+        <div>
+          <Link href="/help" className="text-gray-500 hover:underline">
+            Помощь
+          </Link>
+        </div>
       </div>
     </header>
   );
