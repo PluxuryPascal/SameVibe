@@ -90,7 +90,14 @@ export default function SearchPage() {
           currentCategory={currentCategory}
           onSelectCategory={setCurrentCategory}
         />
-        <div className="relative mb-6">
+        <div className="relative mb-10">
+          {/* Кнопка для открытия контекстного меню фильтра */}
+          <button
+            onClick={() => setAdvancedFilterOpen(!advancedFilterOpen)}
+            className="absolute right-0 -bottom-8 px-3 py-1 bg-gray-300 rounded-br-xl hover:bg-gray-400"
+          >
+            Фильтр ▼
+          </button>
           <InputField
             label="Найти пользователя"
             type="text"
@@ -98,13 +105,7 @@ export default function SearchPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
-          {/* Кнопка для открытия контекстного меню фильтра */}
-          <button
-            onClick={() => setAdvancedFilterOpen(!advancedFilterOpen)}
-            className="absolute right-0 top-0 mt-8 mr-2 px-3 py-1 bg-gray-300 rounded hover:bg-gray-400"
-          >
-            Фильтр
-          </button>
+
           {advancedFilterOpen && (
             <SearchAdvancedFilter
               sortOrder={sortOrder}

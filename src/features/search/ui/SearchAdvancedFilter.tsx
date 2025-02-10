@@ -19,7 +19,7 @@ export default function SearchAdvancedFilter({
   onClose,
 }: SearchAdvancedFilterProps) {
   return (
-    <div className="absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded shadow-lg p-4 z-50">
+    <div className="absolute right-0 mt-4 bg-white border border-gray-200 rounded shadow-lg p-4 z-50">
       <div className="mb-4">
         <h4 className="font-semibold mb-2">Сортировка</h4>
         <div className="flex space-x-2">
