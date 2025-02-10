@@ -29,33 +29,41 @@ export default function ChooseMusicPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4">
-      {/* Заголовок и логотип */}
-      <div className="mb-6 text-center">
-        <Logo />
-        <h2 className="text-2xl font-bold mt-4">
-          Выберите ваш музыкальный вкус
-        </h2>
-      </div>
-      {/* Сетка выбора музыкальных жанров */}
-      <SelectionGrid
-        items={musicGenres}
-        selectedItems={selectedMusic}
-        onToggle={toggleMusic}
-      />
-      {/* Кнопка продолжения */}
-      <div className="mt-6 w-full max-w-xs">
-        <Button
-          onClick={() => console.log("Selected music genres:", selectedMusic)}
-        >
-          Продолжить
-        </Button>
-      </div>
-      {/* Навигация. Например, можно направить на главный экран или другую страницу */}
-      <div className="mt-4">
-        <Link href="/main" className="text-blue-500">
-          Перейти к главному экрану
-        </Link>
+    <div className="min-h-screen flex  items-center justify-center p-4">
+      <div className="grid grid-cols-2 gap-8 w-full max-w-6xl">
+        {/* Логотип */}
+        <div className="flex items-center justify-center">
+          <Logo width={800} height={800} />
+        </div>
+        <div className="flex flex-col items-center justify-center">
+          <div className="mb-6 text-center">
+            <h2 className="text-2xl font-bold mt-4">
+              Выберите ваш музыкальный вкус
+            </h2>
+          </div>
+          {/* Сетка выбора музыкальных жанров */}
+          <SelectionGrid
+            items={musicGenres}
+            selectedItems={selectedMusic}
+            onToggle={toggleMusic}
+          />
+          {/* Кнопка продолжения */}
+          <div className="mt-6 w-full max-w-xs">
+            <Button
+              onClick={() =>
+                console.log("Selected music genres:", selectedMusic)
+              }
+            >
+              Продолжить
+            </Button>
+          </div>
+          {/* Навигация. Например, можно направить на главный экран или другую страницу */}
+          <div className="mt-4">
+            <Link href="/main" className="text-blue-500">
+              Перейти к главному экрану
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   );

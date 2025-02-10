@@ -28,31 +28,37 @@ export default function ChooseHobbiesPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4">
-      {/* Заголовок и логотип */}
-      <div className="mb-6 text-center">
-        <Logo />
-        <h2 className="text-2xl font-bold mt-4">Выберите ваши хобби</h2>
-      </div>
-      {/* Сетка выбора хобби */}
-      <SelectionGrid
-        items={hobbies}
-        selectedItems={selectedHobbies}
-        onToggle={toggleHobby}
-      />
-      {/* Кнопка продолжения */}
-      <div className="mt-6 w-full max-w-xs">
-        <Button
-          onClick={() => console.log("Selected hobbies:", selectedHobbies)}
-        >
-          Продолжить
-        </Button>
-      </div>
-      {/* Навигация к следующей странице (Выбор музыкального вкуса) */}
-      <div className="mt-4">
-        <Link href="/choose/music" className="text-blue-500">
-          Перейти к выбору музыкального вкуса
-        </Link>
+    <div className="min-h-screen flex  items-center justify-center p-4">
+      <div className="grid grid-cols-2 gap-8 w-full max-w-6xl">
+        {/* Логотип */}
+        <div className="flex items-center justify-center">
+          <Logo width={800} height={800} />
+        </div>
+        <div className="flex flex-col items-center justify-center">
+          <div className="mb-6 text-center">
+            <h2 className="text-2xl font-bold mt-4">Выберите ваши хобби</h2>
+          </div>
+          {/* Сетка выбора хобби */}
+          <SelectionGrid
+            items={hobbies}
+            selectedItems={selectedHobbies}
+            onToggle={toggleHobby}
+          />
+          {/* Кнопка продолжения */}
+          <div className="mt-6 w-full max-w-xs">
+            <Button
+              onClick={() => console.log("Selected hobbies:", selectedHobbies)}
+            >
+              Продолжить
+            </Button>
+          </div>
+          {/* Навигация к следующей странице (Выбор музыкального вкуса) */}
+          <div className="mt-4">
+            <Link href="/choose/music" className="text-blue-500">
+              Перейти к выбору музыкального вкуса
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   );
