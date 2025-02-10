@@ -1,8 +1,25 @@
 import React from "react";
+import ChatCard from "./ChatCard";
 
-export default function ChatSidebar() {
-  const chats = ["Чат 1", "Чат 2", "Чат 3", "Чат 4"];
+export interface Chat {
+  id: number;
+  chatName: string;
+  lastMessage: string;
+  time: string;
+  messages: { sender: string; text: string; time: string }[];
+}
 
+interface ChatSidebarProps {
+  chats: Chat[];
+  selectedChatId: number;
+  onSelectChat: (chatId: number) => void;
+}
+
+export default function ChatSidebar({
+  chats = [],
+  selectedChatId,
+  onSelectChat,
+}: ChatSidebarProps) {
   return (
     <aside className="w-1/4 border-r border-gray-200 p-4 flex flex-col">
       <div className="mb-4">
@@ -13,12 +30,17 @@ export default function ChatSidebar() {
         />
       </div>
       <ul className="flex-1 overflow-y-auto">
-        {chats.map((chat, idx) => (
+        {chats.map((chat) => (
           <li
-            key={idx}
-            className="p-3 mb-2 rounded cursor-pointer hover:bg-blue-50 transition-colors"
+            key={chat.id}
+            onClick={() => onSelectChat(chat.id)}
+            className={`cursor-pointer mb-2 rounded p-1 ${selectedChatId === chat.id ? "bg-blue-100" : ""}`}
           >
-            {chat}
+            <ChatCard
+              chatName={chat.chatName}
+              lastMessage={chat.lastMessage}
+              time={chat.time}
+            />
           </li>
         ))}
       </ul>

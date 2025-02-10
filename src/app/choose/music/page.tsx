@@ -59,7 +59,7 @@ export default function ChooseMusicPage() {
           </div>
           {/* Навигация. Например, можно направить на главный экран или другую страницу */}
           <div className="mt-4">
-            <Link href="/main" className="text-blue-500">
+            <Link href="/chats" className="text-blue-500">
               Перейти к главному экрану
             </Link>
           </div>

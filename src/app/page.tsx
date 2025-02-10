@@ -11,11 +11,11 @@ export default function HomePage() {
         Заводите знакомства в SameVibe!
       </h1>
       <div className=" flex  items-center justify-center space-x-4 w-full max-w-xs ">
-        <Link href="/auth/login" passHref>
-          <Button className="flex-1 w-52">Вход</Button>
+        <Link href="/auth/login" className="flex-1 " passHref>
+          <Button>Вход</Button>
         </Link>
-        <Link href="/auth/register" passHref>
-          <Button className="flex-1 w-52">Регистрация</Button>
+        <Link href="/auth/register" className="flex-1 " passHref>
+          <Button>Регистрация</Button>
         </Link>
       </div>
     </div>
