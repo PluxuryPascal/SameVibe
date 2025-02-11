@@ -1,12 +1,12 @@
 import React from "react";
 
-interface InterestsSelectionContainerProps {
+interface SelectionContainerProps {
   children: React.ReactNode;
 }
 
-export default function InterestsSelectionContainer({
+export default function SelectionContainer({
   children,
-}: InterestsSelectionContainerProps) {
+}: SelectionContainerProps) {
   return (
     <div className="border-t-4 border-r-4 border-blue-500  rounded-lg shadow p-4 w-full max-h-96 overflow-y-auto">
       {children}

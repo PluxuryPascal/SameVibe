@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import Button from "src/components/ui/Button";
 import SelectionGrid from "src/components/ui/SelectionGrid";
-import InterestsSelectionContainer from "src/components/ui/InterestsSelectionContainer";
+import InterestsSelectionContainer from "@/components/ui/SelectionContainer";
 import { useRouter } from "next/navigation";
 
 export default function ChooseInterestsContainer() {
