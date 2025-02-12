@@ -1,11 +1,11 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Header from "src/components/layout/Header";
 import ChatSidebar, { Chat } from "src/features/chat/ui/ChatSidebar";
 import ChatWindow from "src/features/chat/ui/ChatWindow";
 
 export default function ChatsPage() {
-  // Статический список чатов с сообщениями (пример)
+  // Пример статического списка чатов
   const chats: Chat[] = [
     {
       id: 1,
@@ -54,21 +54,30 @@ export default function ChatsPage() {
     },
   ];
 
-  // Выбираем первый чат по умолчанию
-  const [selectedChatId, setSelectedChatId] = useState(chats[0].id);
+  const [selectedChatId, setSelectedChatId] = useState(0);
   const selectedChat = chats.find((chat) => chat.id === selectedChatId);
 
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setSelectedChatId(0);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="h-screen bg-gray-100 flex flex-col">
       <Header />
-      <div className="flex h-[calc(100vh-80px)]">
-        {/* Боковая панель с чатами */}
+      {/* Используем h-screen, чтобы область чата занимала всю высоту окна */}
+      <div className="flex flex-1">
         <ChatSidebar
           chats={chats}
           selectedChatId={selectedChatId}
           onSelectChat={setSelectedChatId}
         />
-        {/* Окно выбранного чата */}
         <div className="flex-1">
           {selectedChat ? (
             <ChatWindow chat={selectedChat} />

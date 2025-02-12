@@ -15,7 +15,7 @@ export default function ChatCard({
   avatar,
 }: ChatCardProps) {
   return (
-    <div className="flex items-center p-4 bg-white rounded shadow mb-4 cursor-pointer hover:bg-gray-50 transition-colors">
+    <div className="flex items-center p-4 bg-white rounded shadow  cursor-pointer hover:bg-gray-50 transition-colors">
       <div className="relative w-16 h-16">
         <Image
           src={avatar || "/assets/profile-placeholder.png"}

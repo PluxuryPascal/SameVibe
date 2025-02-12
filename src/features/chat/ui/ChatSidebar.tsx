@@ -34,7 +34,7 @@ export default function ChatSidebar({
           <li
             key={chat.id}
             onClick={() => onSelectChat(chat.id)}
-            className={`cursor-pointer mb-2 rounded p-1 ${selectedChatId === chat.id ? "bg-blue-100" : ""}`}
+            className={`cursor-pointer rounded p-1 ${selectedChatId === chat.id ? "bg-blue-100" : ""}`}
           >
             <ChatCard
               chatName={chat.chatName}
