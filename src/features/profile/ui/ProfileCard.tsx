@@ -1,6 +1,7 @@
 import React from "react";
 import Image from "next/image";
-import Button from "src/components/ui/Button";
+import Button from "@/components/ui/Button";
+import Link from "next/link";
 
 export default function ProfileCard() {
   return (
@@ -19,8 +20,10 @@ export default function ProfileCard() {
           Краткое описание или статус пользователя
         </p>
       </div>
-      <div className="mt-6">
-        <Button>Редактировать профиль</Button>
+      <div className="mt-4">
+        <Link href="/profile/edit" className="flex-1 " passHref>
+          <Button>Редактировать профиль</Button>
+        </Link>
       </div>
     </div>
   );
