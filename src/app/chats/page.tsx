@@ -42,7 +42,8 @@ export default function ChatsPage() {
     {
       id: 4,
       chatName: "Чат с коллегами",
-      lastMessage: "Проект готов, отличная работа!",
+      lastMessage:
+        "Проект готов, отличная работа!!!!!!!@!!!!!!!!!!!!!!!!!!!!!!!!!s",
       time: "Вчера",
       messages: [
         {
