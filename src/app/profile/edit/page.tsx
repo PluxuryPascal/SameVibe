@@ -1,6 +1,7 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Header from "src/components/layout/Header";
 import AvatarUploader from "src/features/profile/ui/AvatarUploader";
 import NameInput from "src/features/profile/ui/NameInput";
@@ -16,11 +17,29 @@ export default function EditProfilePage() {
     submitProfileChanges,
     logout,
   } = useProfileEditor();
+  const router = useRouter();
+  const [saveMessage, setSaveMessage] = useState("");
+
+  const handleSubmit = async () => {
+    await submitProfileChanges(); // Отправка данных на сервер
+    setSaveMessage("Изменения сохранены");
+    // Через 3 секунды удаляем сообщение и переходим на /profile
+    setTimeout(() => {
+      setSaveMessage("");
+      router.push("/profile");
+    }, 3000);
+  };
 
   return (
     <div className="min-h-screen bg-gray-100">
       <Header />
-      <div className="max-w-4xl  mx-auto bg-white p-8 m-10 rounded shadow">
+      {/* Уведомление о сохранении изменений */}
+      {saveMessage && (
+        <div className="fixed top-20 right-4 bg-green-500 text-white px-4 py-2 rounded transition-opacity duration-1000">
+          {saveMessage}
+        </div>
+      )}
+      <div className="max-w-4xl mx-auto bg-white p-8 m-10 rounded shadow">
         <h1 className="text-3xl font-bold mb-6 text-center">
           Редактировать профиль
         </h1>
@@ -59,14 +78,14 @@ export default function EditProfilePage() {
         </div>
         <span
           onClick={logout}
-          className=" mb-2 text-red-500 cursor-pointer hover:underline"
+          className="mb-2 text-red-500 cursor-pointer hover:underline"
         >
           Выйти из аккаунта
         </span>
 
         {/* Нижняя панель: сохранение изменений */}
         <div className="flex justify-between mt-6">
-          <Button onClick={submitProfileChanges}>Сохранить изменения</Button>
+          <Button onClick={handleSubmit}>Сохранить изменения</Button>
         </div>
       </div>
     </div>
