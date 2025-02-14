@@ -19,18 +19,20 @@ export default function SearchPage() {
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
   const [gender, setGender] = useState<GenderFilter>("all");
 
-  // Пример статических данных для каждой категории, добавлено поле gender.
+  // Пример статических данных для каждой категории, добавлено поле gender и isFriend.
   const resultsByCategory = {
     interests: [
       {
         name: "Иван Иванов",
         description: "Общие интересы: Спорт, Музыка",
         gender: "male",
+        isFriend: false,
       },
       {
         name: "Мария Петрова",
         description: "Общие интересы: Чтение, Кино",
         gender: "female",
+        isFriend: true,
       },
     ],
     hobbies: [
@@ -38,11 +40,13 @@ export default function SearchPage() {
         name: "Алексей Сидоров",
         description: "Общие хобби: Путешествия, Фотография",
         gender: "male",
+        isFriend: false,
       },
       {
         name: "Елена Кузнецова",
         description: "Общие хобби: Рисование, Кулинария",
         gender: "female",
+        isFriend: false,
       },
     ],
     music: [
@@ -50,11 +54,13 @@ export default function SearchPage() {
         name: "Дмитрий Смирнов",
         description: "Общий музыкальный вкус: Рок, Джаз",
         gender: "male",
+        isFriend: true,
       },
       {
         name: "Анна Михайлова",
         description: "Общий музыкальный вкус: Поп, Классика",
         gender: "female",
+        isFriend: false,
       },
     ],
   };
@@ -79,6 +85,12 @@ export default function SearchPage() {
   const filteredResults = results.filter((user) =>
     user.name.toLowerCase().includes(query.toLowerCase()),
   );
+
+  // Функция для добавления в друзья
+  const handleAddFriend = (name: string) => {
+    console.log(`Добавляем ${name} в друзья`);
+    // Здесь можно добавить вызов API для отправки запроса на добавление в друзья
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 relative">
@@ -122,6 +134,8 @@ export default function SearchPage() {
               key={idx}
               name={user.name}
               description={user.description}
+              isFriend={user.isFriend}
+              onAddFriend={() => handleAddFriend(user.name)}
             />
           ))}
         </div>
