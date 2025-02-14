@@ -54,14 +54,17 @@ export default function EditProfilePage() {
         {/* Ссылки для изменения выбора */}
         <div className="mb-4">
           <p className="text-gray-700 mb-2">Музыкальные вкусы</p>
-          <Link href="/choose/music" className="text-blue-500 hover:underline">
+          <Link
+            href="/choose/music?origin=profile/edit"
+            className="text-blue-500 hover:underline"
+          >
             Изменить музыкальные вкусы
           </Link>
         </div>
         <div className="mb-4">
           <p className="text-gray-700 mb-2">Хобби</p>
           <Link
-            href="/choose/hobbies"
+            href="/choose/hobbies?origin=profile/edit"
             className="text-blue-500 hover:underline"
           >
             Изменить хобби
@@ -70,7 +73,7 @@ export default function EditProfilePage() {
         <div className="mb-4">
           <p className="text-gray-700 mb-2">Интересы</p>
           <Link
-            href="/choose/interests"
+            href="/choose/interests?origin=profile/edit"
             className="text-blue-500 hover:underline"
           >
             Изменить интересы

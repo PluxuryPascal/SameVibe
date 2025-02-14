@@ -16,9 +16,6 @@ export default function ProfileCard() {
           className="rounded-full"
         />
         <h2 className="text-2xl font-bold mt-4">Имя Фамилия</h2>
-        <p className="text-gray-600">
-          Краткое описание или статус пользователя
-        </p>
       </div>
       <div className="mt-4">
         <Link href="/profile/edit" className="flex-1 " passHref>

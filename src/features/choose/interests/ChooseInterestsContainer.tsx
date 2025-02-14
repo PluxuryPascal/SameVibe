@@ -1,9 +1,9 @@
 "use client";
 import React, { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Button from "src/components/ui/Button";
 import SelectionGrid from "src/components/ui/SelectionGrid";
 import InterestsSelectionContainer from "@/components/ui/SelectionContainer";
-import { useRouter } from "next/navigation";
 
 export default function ChooseInterestsContainer() {
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
@@ -43,11 +43,20 @@ export default function ChooseInterestsContainer() {
   };
 
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const origin = searchParams.get("origin") || "auth";
+
+  // Формируем ссылку перехода в зависимости от источника
+  const continueLink =
+    origin === "auth"
+      ? `/choose/hobbies?origin=auth`
+      : `/profile/edit?origin=profile`;
 
   const handleContinue = () => {
+    if (selectedInterests.length === 0) return; // Кнопка неактивна
     console.log("Selected interests:", selectedInterests);
-    // Переход на следующую страницу (например, выбор хобби)
-    router.push("/choose/hobbies");
+    // Можно добавить сохранение выбранных данных перед редиректом
+    router.push(continueLink);
   };
 
   return (
@@ -63,7 +72,13 @@ export default function ChooseInterestsContainer() {
         />
       </InterestsSelectionContainer>
       <div className="w-full max-w-xs">
-        <Button onClick={handleContinue}>Продолжить</Button>
+        <Button
+          onClick={handleContinue}
+          disabled={selectedInterests.length === 0}
+          className={`${selectedInterests.length === 0 ? "opacity-50 cursor-not-allowed" : ""}`}
+        >
+          Продолжить
+        </Button>
       </div>
     </div>
   );

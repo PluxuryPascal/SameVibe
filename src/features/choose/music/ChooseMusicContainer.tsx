@@ -1,9 +1,9 @@
 "use client";
 import React, { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Button from "src/components/ui/Button";
 import SelectionGrid from "src/components/ui/SelectionGrid";
 import SelectionContainer from "src/components/ui/SelectionContainer";
-import { useRouter } from "next/navigation";
 
 export default function ChooseMusicContainer() {
   const [selectedMusic, setSelectedMusic] = useState<string[]>([]);
@@ -27,11 +27,19 @@ export default function ChooseMusicContainer() {
   };
 
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const origin = searchParams.get("origin") || "auth";
+
+  // Если пользователь пришёл с авторизации, то после выбора музыкального вкуса переходим в чаты,
+  // иначе возвращаемся на страницу редактирования профиля.
+  const continueLink =
+    origin === "auth" ? `/chats?origin=auth` : `/profile/edit?origin=profile`;
 
   const handleContinue = () => {
+    if (selectedMusic.length === 0) return;
     console.log("Selected music genres:", selectedMusic);
-    // Переход на главный экран или сохранение настроек
-    router.push("/chats");
+    // Здесь можно добавить сохранение выбранных музыкальных вкусов на сервере
+    router.push(continueLink);
   };
 
   return (
@@ -47,7 +55,13 @@ export default function ChooseMusicContainer() {
         />
       </SelectionContainer>
       <div className="w-full max-w-xs">
-        <Button onClick={handleContinue}>Продолжить</Button>
+        <Button
+          onClick={handleContinue}
+          disabled={selectedMusic.length === 0}
+          className={`${selectedMusic.length === 0 ? "opacity-50 cursor-not-allowed" : ""}`}
+        >
+          Продолжить
+        </Button>
       </div>
     </div>
   );
