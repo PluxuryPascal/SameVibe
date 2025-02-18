@@ -52,10 +52,27 @@ export default function ChooseInterestsContainer() {
       ? `/choose/hobbies?origin=auth`
       : `/profile/edit?origin=profile`;
 
-  const handleContinue = () => {
-    if (selectedInterests.length === 0) return; // Кнопка неактивна
+  const handleContinue = async () => {
+    if (selectedInterests.length === 0) return;
     console.log("Selected interests:", selectedInterests);
-    // Можно добавить сохранение выбранных данных перед редиректом
+    try {
+      // Отправка выбранных интересов на сервер
+      const response = await fetch("/api/save-interests/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          // Если используется JWT, можно добавить:
+          // "Authorization": `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ interests: selectedInterests }),
+      });
+      if (!response.ok) {
+        throw new Error("Ошибка сохранения интересов");
+      }
+    } catch (error) {
+      console.error("Ошибка при сохранении интересов:", error);
+      return;
+    }
     router.push(continueLink);
   };
 
@@ -75,7 +92,11 @@ export default function ChooseInterestsContainer() {
         <Button
           onClick={handleContinue}
           disabled={selectedInterests.length === 0}
-          className={`${selectedInterests.length === 0 ? "opacity-50 cursor-not-allowed" : ""}`}
+          className={
+            selectedInterests.length === 0
+              ? "opacity-50 cursor-not-allowed"
+              : ""
+          }
         >
           Продолжить
         </Button>
