@@ -35,10 +35,27 @@ export default function ChooseMusicContainer() {
   const continueLink =
     origin === "auth" ? `/chats?origin=auth` : `/profile/edit?origin=profile`;
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (selectedMusic.length === 0) return;
     console.log("Selected music genres:", selectedMusic);
-    // Здесь можно добавить сохранение выбранных музыкальных вкусов на сервере
+    try {
+      // Отправка выбранных музыкальных вкусов на сервер
+      const response = await fetch("/api/save-music/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          // Если используется JWT, можно добавить заголовок:
+          // "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({ musicGenres: selectedMusic }),
+      });
+      if (!response.ok) {
+        throw new Error("Ошибка сохранения музыкальных вкусов");
+      }
+    } catch (error) {
+      console.error("Ошибка при сохранении музыкальных вкусов:", error);
+      return;
+    }
     router.push(continueLink);
   };
 
@@ -58,7 +75,9 @@ export default function ChooseMusicContainer() {
         <Button
           onClick={handleContinue}
           disabled={selectedMusic.length === 0}
-          className={`${selectedMusic.length === 0 ? "opacity-50 cursor-not-allowed" : ""}`}
+          className={
+            selectedMusic.length === 0 ? "opacity-50 cursor-not-allowed" : ""
+          }
         >
           Продолжить
         </Button>

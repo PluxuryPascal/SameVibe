@@ -32,17 +32,34 @@ export default function ChooseHobbiesContainer() {
   const searchParams = useSearchParams();
   const origin = searchParams.get("origin") || "auth";
 
-  // Если пользователь пришёл с авторизации, продолжаем на выбор музыкальных вкусов,
-  // иначе возвращаемся на страницу редактирования профиля
+  // Формируем ссылку перехода:
+  // для авторизации → на страницу выбора музыкальных вкусов,
+  // для изменения профиля → возвращаемся на /profile/edit
   const continueLink =
     origin === "auth"
       ? `/choose/music?origin=auth`
       : `/profile/edit?origin=profile`;
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (selectedHobbies.length === 0) return;
     console.log("Selected hobbies:", selectedHobbies);
-    // Здесь можно добавить сохранение выбранных хобби на сервере
+    try {
+      // Пример отправки данных на сервер для сохранения выбранных хобби
+      const response = await fetch("/api/save-hobbies/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          // Если используется JWT, можно добавить: Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ hobbies: selectedHobbies }),
+      });
+      if (!response.ok) {
+        throw new Error("Ошибка сохранения хобби");
+      }
+    } catch (error) {
+      console.error("Ошибка при сохранении хобби:", error);
+      return;
+    }
     router.push(continueLink);
   };
 
@@ -62,7 +79,9 @@ export default function ChooseHobbiesContainer() {
         <Button
           onClick={handleContinue}
           disabled={selectedHobbies.length === 0}
-          className={`${selectedHobbies.length === 0 ? "opacity-50 cursor-not-allowed" : ""}`}
+          className={
+            selectedHobbies.length === 0 ? "opacity-50 cursor-not-allowed" : ""
+          }
         >
           Продолжить
         </Button>
