@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+"use client";
+import React, { useState, useEffect } from "react";
 
 interface Message {
   sender: string;
@@ -19,9 +20,35 @@ interface ChatWindowProps {
 export default function ChatWindow({ chat }: ChatWindowProps) {
   const [newMessage, setNewMessage] = useState("");
   const [attachedFile, setAttachedFile] = useState<File | null>(null);
-  const handleSend = (e: React.FormEvent) => {
+
+  // TODO: Реализовать подключение к WebSocket для получения сообщений в режиме реального времени
+  /*
+  useEffect(() => {
+    const socket = new WebSocket("ws://yourserver/ws/chats/" + chat.id + "/");
+    socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      // Обновите состояние сообщений, например, добавив новое сообщение:
+      // setMessages(prev => [...prev, data.message]);
+    };
+    return () => socket.close();
+  }, [chat.id]);
+  */
+
+  const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Здесь можно добавить логику отправки сообщения
+
+    // TODO: Отправить сообщение на сервер через WebSocket или fetch
+    /*
+    const payload = { chatId: chat.id, text: newMessage, attachedFile };
+    // Если используете WebSocket:
+    socket.send(JSON.stringify(payload));
+    // Или отправка через fetch:
+    await fetch(`/api/chats/${chat.id}/send/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    */
     console.log("Sending message:", newMessage, attachedFile);
     setNewMessage("");
     setAttachedFile(null);
@@ -62,7 +89,6 @@ export default function ChatWindow({ chat }: ChatWindowProps) {
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
           />
-
           <button
             type="submit"
             className="bg-blue-500 text-white p-3 rounded-r hover:bg-blue-600 transition-colors"
@@ -81,7 +107,7 @@ export default function ChatWindow({ chat }: ChatWindowProps) {
           />
           <label
             htmlFor="fileInput"
-            className="cursor-pointer p-3 ml-2 mr-2  bg-gray-200 rounded-r hover:bg-gray-300"
+            className="cursor-pointer p-3 ml-2 mr-2 bg-gray-200 rounded-r hover:bg-gray-300"
           >
             Прикрепить
           </label>

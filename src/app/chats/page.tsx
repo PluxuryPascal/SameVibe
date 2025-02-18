@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import Header from "src/components/layout/Header";
 import ChatSidebar, { Chat } from "src/features/chat/ui/ChatSidebar";
 import ChatWindow from "src/features/chat/ui/ChatWindow";
+import { useRouter } from "next/navigation";
 
 export default function ChatsPage() {
   // Пример статического списка чатов
@@ -55,24 +56,31 @@ export default function ChatsPage() {
     },
   ];
 
-  const [selectedChatId, setSelectedChatId] = useState(0);
-  const selectedChat = chats.find((chat) => chat.id === selectedChatId);
-
+  // TODO: Получение списка чатов с сервера (раскомментируйте для интеграции)
+  /*
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setSelectedChatId(0);
+    async function fetchChats() {
+      try {
+        const response = await fetch("/api/chats/");
+        if (response.ok) {
+          const data = await response.json();
+          setChats(data);
+        }
+      } catch (error) {
+        console.error("Ошибка получения чатов:", error);
       }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    }
+    fetchChats();
   }, []);
+  */
+
+  const [selectedChatId, setSelectedChatId] = useState(chats[0]?.id || 0);
+  const selectedChat = chats.find((chat) => chat.id === selectedChatId);
+  const router = useRouter();
 
   return (
     <div className="h-screen bg-gray-100 flex flex-col">
       <Header />
-      {/* Используем h-screen, чтобы область чата занимала всю высоту окна */}
       <div className="flex flex-1">
         <ChatSidebar
           chats={chats}
