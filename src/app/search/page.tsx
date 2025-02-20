@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Header from "src/components/layout/Header";
 import InputField from "src/components/ui/InputField";
 import SearchResultCard from "src/features/search/ui/SearchResultCard";
@@ -16,75 +16,96 @@ export default function SearchPage() {
   const [currentCategory, setCurrentCategory] =
     useState<SearchCategory>("interests");
   const [advancedFilterOpen, setAdvancedFilterOpen] = useState(false);
-  const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("desc"); // по умолчанию сортировка по убыванию совместимости
   const [gender, setGender] = useState<GenderFilter>("all");
+  const [results, setResults] = useState<any[]>([]);
 
-  // Пример статических данных для каждой категории, добавлено поле gender и isFriend.
-  const resultsByCategory = {
-    interests: [
-      {
-        name: "Иван Иванов",
-        description: "Общие интересы: Спорт, Музыка",
-        gender: "male",
-        isFriend: false,
-      },
-      {
-        name: "Мария Петрова",
-        description: "Общие интересы: Чтение, Кино",
-        gender: "female",
-        isFriend: true,
-      },
-    ],
-    hobbies: [
-      {
-        name: "Алексей Сидоров",
-        description: "Общие хобби: Путешествия, Фотография",
-        gender: "male",
-        isFriend: false,
-      },
-      {
-        name: "Елена Кузнецова",
-        description: "Общие хобби: Рисование, Кулинария",
-        gender: "female",
-        isFriend: false,
-      },
-    ],
-    music: [
-      {
-        name: "Дмитрий Смирнов",
-        description: "Общий музыкальный вкус: Рок, Джаз",
-        gender: "male",
-        isFriend: true,
-      },
-      {
-        name: "Анна Михайлова",
-        description: "Общий музыкальный вкус: Поп, Классика",
-        gender: "female",
-        isFriend: false,
-      },
-    ],
-  };
+  // Получение списка пользователей с сервера
+  useEffect(() => {
+    async function fetchUsers() {
+      try {
+        // Пример запроса к API. Передавайте параметры фильтрации и категорию поиска, если необходимо.
+        // const res = await fetch(`/api/search/?category=${currentCategory}&query=${query}&gender=${gender}`);
+        // if (!res.ok) {
+        //   throw new Error("Ошибка получения списка пользователей");
+        // }
+        // const data = await res.json();
+        // setResults(data);
 
-  let results = resultsByCategory[currentCategory];
+        // Пока используем статические данные для тестирования:
+        const staticData = [
+          {
+            name: "Иван",
+            surname: "Иванов",
+            interests: ["Спорт", "Музыка"],
+            hobbies: ["Путешествия"],
+            musicTastes: ["Рок", "Джаз"],
+            gender: "male",
+            isFriend: false,
+            compatibility: 95,
+          },
+          {
+            name: "Мария",
+            surname: "Петрова",
+            interests: ["Чтение", "Кино"],
+            hobbies: ["Рисование"],
+            musicTastes: ["Поп", "Классика"],
+            gender: "female",
+            isFriend: true,
+            compatibility: 80,
+          },
+          {
+            name: "Алексей",
+            surname: "Сидоров",
+            interests: ["Спорт", "Музыка", "Кино"],
+            hobbies: ["Путешествия", "Фотография"],
+            musicTastes: ["Рок", "Джаз"],
+            gender: "male",
+            isFriend: false,
+            compatibility: 70,
+          },
+          {
+            name: "Екатерина",
+            surname: "Смирнова",
+            interests: ["Кино", "Искусство"],
+            hobbies: ["Рисование", "Кулинария"],
+            musicTastes: ["Поп", "Классика"],
+            gender: "female",
+            isFriend: false,
+            compatibility: 60,
+          },
+        ];
+        setResults(staticData);
+      } catch (error: any) {
+        console.error(error.message);
+      }
+    }
+    fetchUsers();
+  }, [currentCategory, query, gender]);
 
-  // Фильтрация по полу
-  if (gender !== "all") {
-    results = results.filter((user) => user.gender === gender);
-  }
+  // Фильтрация по введённому запросу (по имени + фамилии)
+  const filteredResults = results.filter((user) => {
+    const fullName = `${user.name} ${user.surname}`.toLowerCase();
+    return fullName.includes(query.toLowerCase());
+  });
 
-  // Сортировка результатов по имени
-  results = results.sort((a, b) => {
-    if (sortOrder === "asc") {
-      return a.name.localeCompare(b.name);
+  // Сортировка: сначала по коэффициенту совместимости, затем по имени, если нужно
+  const sortedResults = filteredResults.sort((a, b) => {
+    if (sortOrder === "desc") {
+      return b.compatibility - a.compatibility;
     } else {
-      return b.name.localeCompare(a.name);
+      return a.compatibility - b.compatibility;
     }
   });
 
-  // Фильтрация по введённому запросу
-  const filteredResults = results.filter((user) =>
-    user.name.toLowerCase().includes(query.toLowerCase()),
-  );
+  // Фильтрация по полу
+  const finalResults =
+    gender === "all"
+      ? sortedResults
+      : sortedResults.filter((user) => user.gender === gender);
+
+  // Оценка: можно также сортировать по алфавиту, если выбран соответствующий параметр,
+  // например, используя a.name.localeCompare(b.name) после сортировки по коэффициенту.
 
   // Функция для добавления в друзья
   const handleAddFriend = (name: string) => {
@@ -113,11 +134,10 @@ export default function SearchPage() {
           <InputField
             label="Найти пользователя"
             type="text"
-            placeholder="Введите имя или ключевое слово"
+            placeholder="Введите имя или фамилию"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
-
           {advancedFilterOpen && (
             <SearchAdvancedFilter
               sortOrder={sortOrder}
@@ -129,11 +149,11 @@ export default function SearchPage() {
           )}
         </div>
         <div>
-          {filteredResults.map((user, idx) => (
+          {finalResults.map((user, idx) => (
             <SearchResultCard
               key={idx}
-              name={user.name}
-              description={user.description}
+              name={`${user.name} ${user.surname}`}
+              description={`Совместимость: ${user.compatibility}%`}
               isFriend={user.isFriend}
               onAddFriend={() => handleAddFriend(user.name)}
             />
