@@ -10,6 +10,7 @@ import Checkbox from "@/components/ui/CheckBox";
 export default function RegisterPage() {
   // Состояния для формы
   const [name, setName] = useState("");
+  const [surname, setSurname] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   // Используем единое состояние для гендера: "male", "female" или undefined
@@ -26,7 +27,7 @@ export default function RegisterPage() {
       const response = await fetch("/api/register/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password, gender }),
+        body: JSON.stringify({ name, surname, email, password, gender }),
       });
 
       if (!response.ok) {
@@ -64,6 +65,13 @@ export default function RegisterPage() {
                 placeholder="Введите имя"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+              />
+              <InputField
+                label="Фамилия"
+                type="text"
+                placeholder="Введите фамилию"
+                value={surname}
+                onChange={(e) => setSurname(e.target.value)}
               />
               <InputField
                 label="Email"

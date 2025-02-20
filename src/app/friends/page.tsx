@@ -88,16 +88,20 @@ export default function FriendsPage() {
       <Header />
       <div className="max-w-2xl mx-auto py-10">
         <h2 className="text-3xl font-bold mb-6 text-center">Друзья</h2>
-        {friends.map((friend) => (
-          <FriendCard
-            key={friend.id}
-            name={friend.name}
-            status={friend.status}
-            avatar={friend.avatar}
-            onDelete={() => handleDeleteFriend(friend.id)}
-            onWrite={() => handleWriteMessage(friend.id)}
-          />
-        ))}
+        {friends.length > 0 ? (
+          friends.map((friend) => (
+            <FriendCard
+              key={friend.id}
+              name={friend.name}
+              status={friend.status}
+              avatar={friend.avatar}
+              onDelete={() => handleDeleteFriend(friend.id)}
+              onWrite={() => handleWriteMessage(friend.id)}
+            />
+          ))
+        ) : (
+          <div className="font-bold mt-10 text-center">У вас нет друзей</div>
+        )}
       </div>
     </div>
   );
