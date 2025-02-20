@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Header from "src/components/layout/Header";
 import AvatarUploader from "src/features/profile/ui/AvatarUploader";
 import NameInput from "src/features/profile/ui/NameInput";
+import InputField from "src/components/ui/InputField";
 import Button from "src/components/ui/Button";
 import useProfileEditor from "src/features/profile/logic/useProfileEditor";
 
@@ -12,8 +13,14 @@ export default function EditProfilePage() {
   const {
     avatar,
     name,
+    surname,
+    email,
+    gender,
     updateAvatar,
     updateName,
+    updateSurname,
+    updateEmail,
+    updateGender,
     submitProfileChanges,
     logout,
   } = useProfileEditor();
@@ -21,13 +28,17 @@ export default function EditProfilePage() {
   const [saveMessage, setSaveMessage] = useState("");
 
   const handleSubmit = async () => {
-    await submitProfileChanges(); // Отправка данных на сервер
-    setSaveMessage("Изменения сохранены");
-    // Через 3 секунды удаляем сообщение и переходим на /profile
-    setTimeout(() => {
-      setSaveMessage("");
-      router.push("/profile");
-    }, 3000);
+    try {
+      await submitProfileChanges(); // Отправка данных на сервер
+      setSaveMessage("Изменения сохранены");
+      setTimeout(() => {
+        setSaveMessage("");
+        router.push("/profile");
+      }, 3000);
+    } catch (error) {
+      console.error(error);
+      // Здесь можно добавить обработку ошибки (например, установить сообщение об ошибке)
+    }
   };
 
   return (
@@ -50,8 +61,43 @@ export default function EditProfilePage() {
         />
         {/* Изменение имени */}
         <NameInput name={name} onNameChange={updateName} />
+        {/* Изменение фамилии */}
+        <InputField
+          label="Фамилия"
+          type="text"
+          placeholder="Введите фамилию"
+          value={surname}
+          onChange={(e) => updateSurname(e.target.value)}
+        />
+        {/* Изменение email */}
+        <InputField
+          label="Email"
+          type="email"
+          placeholder="Введите email"
+          value={email}
+          onChange={(e) => updateEmail(e.target.value)}
+        />
+        {/* Выбор пола */}
+        <div className="mb-4">
+          <label className="block mb-1 font-medium">Пол</label>
+          <select
+            value={gender || ""}
+            onChange={(e) =>
+              updateGender(
+                e.target.value
+                  ? (e.target.value as "male" | "female")
+                  : undefined,
+              )
+            }
+            className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring focus:border-blue-300"
+          >
+            <option value="">Не выбран</option>
+            <option value="male">Мужской</option>
+            <option value="female">Женский</option>
+          </select>
+        </div>
 
-        {/* Ссылки для изменения выбора */}
+        {/* Ссылки для изменения выбора (музыкальные вкусы, хобби, интересы) */}
         <div className="mb-4">
           <p className="text-gray-700 mb-2">Музыкальные вкусы</p>
           <Link
