@@ -1,55 +1,50 @@
 "use client";
 import React, { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useMutation, UseMutationResult } from "@tanstack/react-query";
+import api from "src/shared/lib/axios";
 import Logo from "src/components/ui/Logo";
 import InputField from "src/components/ui/InputField";
 import Button from "src/components/ui/Button";
+import Link from "next/link";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  type LoginVars = { username: string; password: string };
+
+  const loginMutation: UseMutationResult<any, Error, LoginVars, unknown> =
+    useMutation<any, Error, LoginVars>({
+      mutationFn: async (vars: LoginVars) => {
+        const response = await api.post("/token/", vars);
+        return response.data;
+      },
+      onSuccess: (data) => {
+        localStorage.setItem("accessToken", data.access);
+        localStorage.setItem("refreshToken", data.refresh);
+        router.push("/choose/interests?origin=auth");
+      },
+      onError: (error: Error) => {
+        console.log(error);
+        setErrorMessage("Неверный логин или пароль");
+      },
+    });
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage("");
-
-    try {
-      const response = await fetch("/api/token/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Неверный email или пароль");
-      }
-      const data = await response.json();
-
-      // Сохранение токенов (access и refresh) в localStorage.
-      // В реальном проекте рекомендуется использовать httpOnly cookies для большей безопасности.
-      localStorage.setItem("accessToken", data.access);
-      localStorage.setItem("refreshToken", data.refresh);
-
-      // Перенаправляем пользователя на страницу выбора интересов с параметром origin=auth
-      router.push("/choose/interests?origin=auth");
-    } catch (error: any) {
-      setErrorMessage(error.message || "Ошибка при входе");
-    }
+    loginMutation.mutate({ username, password });
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="grid grid-cols-2 gap-8 w-full max-w-6xl">
-        {/* Левая колонка с логотипом */}
         <div className="flex items-center justify-center">
           <Logo width={800} height={800} />
         </div>
-        {/* Правая колонка с формой */}
         <div className="flex items-center justify-center">
           <div className="w-full max-w-md bg-white p-8 rounded shadow">
             <div className="mb-6 text-center">
@@ -60,11 +55,11 @@ export default function LoginPage() {
             )}
             <form onSubmit={handleSubmit}>
               <InputField
-                label="Email"
-                type="email"
-                placeholder="Введите email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                label="Логин"
+                type="text"
+                placeholder="Введите логин"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
               />
               <InputField
                 label="Пароль"
@@ -73,7 +68,9 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
-              <Button type="submit">Войти</Button>
+              <Button type="submit" disabled={loginMutation.isPending}>
+                {loginMutation.isPending ? "Вход..." : "Войти"}
+              </Button>
             </form>
             <p className="mt-4 text-center">
               Нет аккаунта?{" "}
