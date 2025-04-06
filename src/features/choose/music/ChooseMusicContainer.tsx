@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import api from "src/shared/lib/axios";
@@ -16,7 +16,7 @@ export default function ChooseMusicContainer() {
   const continueLink =
     origin === "auth" ? `/chats?origin=auth` : `/profile/edit?origin=profile`;
 
-  // Запрос всех музыкальных жанров
+  // Запрос всех музыкальных жанров (ожидается массив объектов { id, name })
   const { data: allMusic = [] } = useQuery<SelectionItem[]>({
     queryKey: ["music"],
     queryFn: async () => {
@@ -25,7 +25,7 @@ export default function ChooseMusicContainer() {
     },
   });
 
-  // Запрос музыкальных жанров пользователя
+  // Запрос музыкальных жанров пользователя (ожидается массив объектов с полем music_id)
   const { data: userMusic = [] } = useQuery({
     queryKey: ["user-music"],
     queryFn: async () => {
@@ -37,7 +37,7 @@ export default function ChooseMusicContainer() {
     },
   });
 
-  // Mutation для сохранения музыкальных жанров (PUT-запрос)
+  // Mutation для сохранения музыкальных жанров (PUT-запрос с телом { music_ids: [...] })
   const saveMusicMutation = useMutation({
     mutationFn: async (music_ids: number[]) => {
       const token = localStorage.getItem("accessToken");
@@ -59,10 +59,9 @@ export default function ChooseMusicContainer() {
     },
   });
 
-  // При загрузке выбираем уже выбранные музыкальные жанры
-  React.useEffect(() => {
+  useEffect(() => {
     if (userMusic.length > 0) {
-      const selected = userMusic.map((um: any) => um.music_id);
+      const selected = userMusic.map((um: any) => um.genre.id);
       setSelectedMusic(selected);
     }
   }, [userMusic]);
@@ -85,17 +84,17 @@ export default function ChooseMusicContainer() {
       </div>
       <SelectionContainer>
         <SelectionGrid
-          items={allMusic}
-          selectedItems={selectedMusic}
+          items={allMusic} // массив объектов { id, name }
+          selectedItems={selectedMusic} // массив id выбранных жанров
           onToggle={toggleMusic}
         />
       </SelectionContainer>
       <div className="w-full max-w-xs">
         <Button
           onClick={handleContinue}
-          disabled={selectedMusic.length < 2}
+          disabled={selectedMusic.length === 0}
           className={
-            selectedMusic.length < 2 ? "opacity-50 cursor-not-allowed" : ""
+            selectedMusic.length === 0 ? "opacity-50 cursor-not-allowed" : ""
           }
         >
           Продолжить

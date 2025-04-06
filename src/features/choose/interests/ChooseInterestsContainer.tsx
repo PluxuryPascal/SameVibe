@@ -4,13 +4,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import api from "src/shared/lib/axios";
 import Button from "src/components/ui/Button";
-import SelectionGrid from "src/components/ui/SelectionGrid";
+import SelectionGrid, { SelectionItem } from "src/components/ui/SelectionGrid";
 import InterestsSelectionContainer from "@/components/ui/SelectionContainer";
-
-interface InterestItem {
-  id: number;
-  name: string;
-}
 
 export default function ChooseInterestsContainer() {
   // Храним выбранные интересы как массив числовых id
@@ -24,8 +19,8 @@ export default function ChooseInterestsContainer() {
       ? `/choose/hobbies?origin=auth`
       : `/profile/edit?origin=profile`;
 
-  // Получение всех интересов
-  const { data: allInterests = [] } = useQuery<InterestItem[]>({
+  // Получение всех интересов (ожидается массив объектов { id, name })
+  const { data: allInterests = [] } = useQuery<SelectionItem[]>({
     queryKey: ["interests"],
     queryFn: async () => {
       const res = await api.get("/interests/interestslist/");
@@ -33,7 +28,7 @@ export default function ChooseInterestsContainer() {
     },
   });
 
-  // Получение интересов пользователя
+  // Получение интересов пользователя (ожидается массив объектов { id, name })
   const { data: userInterests = [] } = useQuery({
     queryKey: ["user-interests"],
     queryFn: async () => {
@@ -45,7 +40,7 @@ export default function ChooseInterestsContainer() {
     },
   });
 
-  // Сохранение интересов пользователя (PUT-запрос)
+  // Mutation для сохранения интересов (PUT-запрос с телом { interest_ids: [...] })
   const saveInterestsMutation = useMutation({
     mutationFn: async (interest_ids: number[]) => {
       const token = localStorage.getItem("accessToken");
@@ -67,10 +62,9 @@ export default function ChooseInterestsContainer() {
     },
   });
 
-  // При загрузке компонента устанавливаем выбранные интересы
   useEffect(() => {
     if (userInterests.length > 0) {
-      const selected = userInterests.map((ui: any) => ui.interest_id);
+      const selected = userInterests.map((ui: any) => ui.interest.id);
       setSelectedInterests(selected);
     }
   }, [userInterests]);
@@ -94,7 +88,7 @@ export default function ChooseInterestsContainer() {
       </div>
       <InterestsSelectionContainer>
         <SelectionGrid
-          items={allInterests} // ожидаем, что каждый элемент имеет поля id и name
+          items={allInterests} // ожидается, что каждый элемент имеет поля id и name
           selectedItems={selectedInterests} // массив id выбранных интересов
           onToggle={toggleInterest}
         />

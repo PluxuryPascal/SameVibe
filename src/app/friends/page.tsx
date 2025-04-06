@@ -100,7 +100,9 @@ export default function FriendsPage() {
             />
           ))
         ) : (
-          <div className="font-bold mt-10 text-center">У вас нет друзей</div>
+          <div className="font-bold mt-10 text-center">
+            Добавьте друзей, чтобы начать общаться!
+          </div>
         )}
       </div>
     </div>

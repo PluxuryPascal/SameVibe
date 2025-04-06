@@ -8,6 +8,7 @@ import SelectionGrid, { SelectionItem } from "src/components/ui/SelectionGrid";
 import SelectionContainer from "src/components/ui/SelectionContainer";
 
 export default function ChooseHobbiesContainer() {
+  // Храним выбранные хобби как массив числовых id
   const [selectedHobbies, setSelectedHobbies] = useState<number[]>([]);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -18,7 +19,7 @@ export default function ChooseHobbiesContainer() {
       ? `/choose/music?origin=auth`
       : `/profile/edit?origin=profile`;
 
-  // Запрос всех хобби
+  // Получение всех хобби (ожидается массив объектов { id, name })
   const { data: allHobbies = [] } = useQuery<SelectionItem[]>({
     queryKey: ["hobbies"],
     queryFn: async () => {
@@ -27,7 +28,7 @@ export default function ChooseHobbiesContainer() {
     },
   });
 
-  // Запрос хобби, выбранных пользователем
+  // Получение хобби, выбранных пользователем (ожидается массив объектов с полем hobby_id)
   const { data: userHobbies = [] } = useQuery({
     queryKey: ["user-hobbies"],
     queryFn: async () => {
@@ -39,7 +40,7 @@ export default function ChooseHobbiesContainer() {
     },
   });
 
-  // Mutation для сохранения хобби (PUT-запрос)
+  // Mutation для сохранения хобби (PUT-запрос с телом { hobby_ids: [...] })
   const saveHobbiesMutation = useMutation({
     mutationFn: async (hobby_ids: number[]) => {
       const token = localStorage.getItem("accessToken");
@@ -63,12 +64,12 @@ export default function ChooseHobbiesContainer() {
 
   useEffect(() => {
     if (userHobbies.length > 0) {
-      // Предполагается, что каждый элемент userHobbies имеет поле hobby с вложенным объектом
-      const selected = userHobbies.map((uh: any) => uh.hobby_id);
+      const selected = userHobbies.map((uh: any) => uh.hobby.id);
       setSelectedHobbies(selected);
     }
   }, [userHobbies]);
 
+  // Функция переключения выбранного хобби
   const toggleHobby = (id: number) => {
     setSelectedHobbies((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
@@ -87,8 +88,8 @@ export default function ChooseHobbiesContainer() {
       </div>
       <SelectionContainer>
         <SelectionGrid
-          items={allHobbies}
-          selectedItems={selectedHobbies}
+          items={allHobbies} // массив объектов { id, name }
+          selectedItems={selectedHobbies} // массив id выбранных хобби
           onToggle={toggleHobby}
         />
       </SelectionContainer>

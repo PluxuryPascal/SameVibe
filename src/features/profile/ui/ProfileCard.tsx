@@ -1,73 +1,128 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
+import { useQuery } from "@tanstack/react-query";
+import api from "src/shared/lib/axios";
 import Image from "next/image";
 import Button from "@/components/ui/Button";
 import Link from "next/link";
 
 interface ProfileData {
-  firstName: string;
-  lastName: string;
-  avatarUrl: string;
+  user: {
+    username: string;
+    first_name: string;
+    last_name: string;
+  };
+  photo: string;
+  gender: string;
+}
+
+interface NamedItem {
+  id: number;
+  name: string;
 }
 
 export default function ProfileCard() {
-  const [profile, setProfile] = useState<ProfileData | null>(null);
-  const [error, setError] = useState("");
+  const {
+    data: profile,
+    error: profileError,
+    isLoading: profileLoading,
+  } = useQuery<ProfileData>({
+    queryKey: ["profile"],
+    queryFn: async () => {
+      const token = localStorage.getItem("accessToken");
+      const res = await api.get("/users/profile/", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return res.data;
+    },
+  });
 
-  useEffect(() => {
-    async function fetchProfile() {
-      try {
-        const res = await fetch("/api/profile/", {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            // Если используется JWT, можно добавить заголовок авторизации:
-            // "Authorization": `Bearer ${accessToken}`,
-          },
-        });
-        if (!res.ok) {
-          throw new Error("Ошибка получения данных профиля");
-        }
-        const data: ProfileData = await res.json();
-        setProfile(data);
-      } catch (err: any) {
-        setError(err.message);
-      }
-    }
-    fetchProfile();
-  }, []);
+  const { data: interests = [] } = useQuery<NamedItem[]>({
+    queryKey: ["user-interests"],
+    queryFn: async () => {
+      const token = localStorage.getItem("accessToken");
+      const res = await api.get("/interests/userinterests/", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return res.data.map((item: any) => item.interest);
+    },
+  });
+
+  const { data: hobbies = [] } = useQuery<NamedItem[]>({
+    queryKey: ["user-hobbies"],
+    queryFn: async () => {
+      const token = localStorage.getItem("accessToken");
+      const res = await api.get("/interests/userhobbies/", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return res.data.map((item: any) => item.hobby);
+    },
+  });
+
+  const { data: musicGenres = [] } = useQuery<NamedItem[]>({
+    queryKey: ["user-music-genres"],
+    queryFn: async () => {
+      const token = localStorage.getItem("accessToken");
+      const res = await api.get("/interests/usermusics/", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return res.data.map((item: any) => item.genre);
+    },
+  });
+
+  if (profileLoading) return <div>Загрузка...</div>;
+  if (profileError)
+    return <div className="text-red-500">Ошибка загрузки профиля</div>;
 
   return (
     <div className="max-w-md mx-auto bg-white shadow rounded p-6">
       <div className="flex flex-col items-center">
-        {profile && profile.avatarUrl ? (
-          <Image
-            src={profile.avatarUrl}
-            alt="User Avatar"
-            width={120}
-            height={120}
-            className="rounded-full"
-          />
-        ) : (
-          <Image
-            src="/assets/profile-placeholder.png"
-            alt="User Avatar"
-            width={120}
-            height={120}
-            className="rounded-full"
-          />
-        )}
+        <Image
+          src={profile?.photo || "/assets/profile-placeholder.png"}
+          alt="User Avatar"
+          width={120}
+          height={120}
+          className="rounded-full"
+        />
         <h2 className="text-2xl font-bold mt-4">
-          {profile ? `${profile.firstName} ${profile.lastName}` : "Загрузка..."}
+          {profile.user.first_name} {profile.user.last_name}
         </h2>
+        <p className="text-lg text-gray-600">@{profile.user.username}</p>
       </div>
+
       <div className="mt-4">
-        <Link href="/profile/edit" className="flex-1 " passHref>
+        <h3 className="text-xl font-semibold">Интересы:</h3>
+        <ul className="list-disc ml-6">
+          {interests.map((interest) => (
+            <li key={interest.id}>{interest.name}</li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="mt-4">
+        <h3 className="text-xl font-semibold">Хобби:</h3>
+        <ul className="list-disc ml-6">
+          {hobbies.map((hobby) => (
+            <li key={hobby.id}>{hobby.name}</li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="mt-4">
+        <h3 className="text-xl font-semibold">Музыкальные жанры:</h3>
+        <ul className="list-disc ml-6">
+          {musicGenres.map((genre) => (
+            <li key={genre.id}>{genre.name}</li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="mt-6">
+        <Link href="/profile/edit">
           <Button>Редактировать профиль</Button>
         </Link>
       </div>
-      {error && <p className="mt-2 text-red-500">{error}</p>}
     </div>
   );
 }
