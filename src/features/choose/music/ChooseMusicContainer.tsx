@@ -62,7 +62,7 @@ export default function ChooseMusicContainer() {
   // При загрузке выбираем уже выбранные музыкальные жанры
   React.useEffect(() => {
     if (userMusic.length > 0) {
-      const selected = userMusic.map((um: any) => um.genre.id);
+      const selected = userMusic.map((um: any) => um.music_id);
       setSelectedMusic(selected);
     }
   }, [userMusic]);
@@ -93,9 +93,9 @@ export default function ChooseMusicContainer() {
       <div className="w-full max-w-xs">
         <Button
           onClick={handleContinue}
-          disabled={selectedMusic.length === 0}
+          disabled={selectedMusic.length < 2}
           className={
-            selectedMusic.length === 0 ? "opacity-50 cursor-not-allowed" : ""
+            selectedMusic.length < 2 ? "opacity-50 cursor-not-allowed" : ""
           }
         >
           Продолжить
