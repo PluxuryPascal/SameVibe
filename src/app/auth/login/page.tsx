@@ -16,16 +16,47 @@ export default function LoginPage() {
 
   type LoginVars = { username: string; password: string };
 
+  const checkUserPreferences = async () => {
+    const interestsPromise = api.get("/interests/userinterests/");
+    const hobbiesPromise = api.get("/interests/userhobbies/");
+    const musicsPromise = api.get("/interests/usermusics/");
+    const [interestsRes, hobbiesRes, musicsRes] = await Promise.all([
+      interestsPromise,
+      hobbiesPromise,
+      musicsPromise,
+    ]);
+    return {
+      interests: interestsRes.data,
+      hobbies: hobbiesRes.data,
+      musics: musicsRes.data,
+    };
+  };
+
   const loginMutation: UseMutationResult<any, Error, LoginVars, unknown> =
     useMutation<any, Error, LoginVars>({
       mutationFn: async (vars: LoginVars) => {
         const response = await api.post("/token/", vars);
         return response.data;
       },
-      onSuccess: (data) => {
+      onSuccess: async (data) => {
         localStorage.setItem("accessToken", data.access);
         localStorage.setItem("refreshToken", data.refresh);
-        router.push("/choose/interests?origin=auth");
+        try {
+          const { interests, hobbies, musics } = await checkUserPreferences();
+          // Если все списки пустые, значит пользователь не заполнял предпочтения
+          if (
+            interests.length === 0 &&
+            hobbies.length === 0 &&
+            musics.length === 0
+          ) {
+            router.push("/choose/interests?origin=auth");
+          } else {
+            router.push("/chats/");
+          }
+        } catch (error) {
+          // Если произошла ошибка при получении предпочтений, перенаправить на выбор предпочтений
+          router.push("/choose/interests?origin=auth");
+        }
       },
       onError: (error: Error) => {
         console.log(error);

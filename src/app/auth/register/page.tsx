@@ -1,45 +1,61 @@
 "use client";
 import React, { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useMutation } from "@tanstack/react-query";
+import api from "src/shared/lib/axios";
 import Logo from "src/components/ui/Logo";
 import InputField from "src/components/ui/InputField";
 import Button from "src/components/ui/Button";
-import Checkbox from "@/components/ui/CheckBox";
+import Link from "next/link";
+import Checkbox from "src/components/ui/CheckBox";
+
+type RegisterVars = {
+  username: string;
+  name: string;
+  surname: string;
+  email: string;
+  password: string;
+  gender?: "male" | "female";
+};
 
 export default function RegisterPage() {
-  // Состояния для формы
+  const [username, setUsername] = useState("");
   const [name, setName] = useState("");
   const [surname, setSurname] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  // Используем единое состояние для гендера: "male", "female" или undefined
   const [gender, setGender] = useState<"male" | "female" | undefined>(
     undefined,
   );
   const [errorMessage, setErrorMessage] = useState("");
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const registerMutation = useMutation<any, Error, RegisterVars>({
+    mutationFn: async (vars: RegisterVars) => {
+      const response = await api.post("/users/register/", vars);
+      return response.data;
+    },
+    onSuccess: () => {
+      router.push("/auth/login");
+    },
+    onError: (error: Error) => {
+      setErrorMessage(error.message || "Ошибка при регистрации");
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage("");
-    try {
-      const response = await fetch("/api/register/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, surname, email, password, gender }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || "Ошибка регистрации");
-      }
-
-      // Регистрация успешна: можно перенаправить пользователя на страницу входа.
-      router.push("/auth/login");
-    } catch (error: any) {
-      setErrorMessage(error.message || "Ошибка при регистрации");
-    }
+    registerMutation.mutate({
+      user: {
+        username: username,
+        first_name: name,
+        last_name: surname,
+        email: email,
+        password: password,
+      },
+      gender: gender === "male" ? true : gender === "female" ? false : null,
+    });
   };
 
   return (
@@ -59,6 +75,13 @@ export default function RegisterPage() {
               <p className="mb-4 text-red-500 text-center">{errorMessage}</p>
             )}
             <form onSubmit={handleSubmit}>
+              <InputField
+                label="Логин"
+                type="text"
+                placeholder="Введите логин"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+              />
               <InputField
                 label="Имя"
                 type="text"
@@ -106,8 +129,14 @@ export default function RegisterPage() {
                   />
                 </div>
               </div>
-              <Button type="submit" className="mt-4">
-                Зарегистрироваться
+              <Button
+                type="submit"
+                className="mt-4"
+                disabled={registerMutation.isPending}
+              >
+                {registerMutation.isPending
+                  ? "Регистрация..."
+                  : "Зарегистрироваться"}
               </Button>
             </form>
             <p className="mt-4 text-center">

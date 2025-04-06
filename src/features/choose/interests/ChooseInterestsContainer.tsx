@@ -1,101 +1,103 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import api from "src/shared/lib/axios";
 import Button from "src/components/ui/Button";
-import SelectionGrid from "src/components/ui/SelectionGrid";
-import InterestsSelectionContainer from "@/components/ui/SelectionContainer";
+import SelectionGrid, { SelectionItem } from "src/components/ui/SelectionGrid";
+import SelectionContainer from "src/components/ui/SelectionContainer";
 
-export default function ChooseInterestsContainer() {
-  const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
-  const interests = [
-    "Спорт",
-    "Музыка",
-    "Кино",
-    "Путешествия",
-    "Книги",
-    "Технологии",
-    "Искусство",
-    "Еда",
-    "Приода",
-    "Прида",
-    "Прда",
-    "Пда",
-    "Па",
-    "Пд",
-    "рирода",
-    "Пирода",
-    "Пррода",
-    "Прироа",
-    "Посолса",
-    "Прспорода",
-    "Прспрода",
-    "Прсприрода",
-    "сода",
-    "Псопроирода",
-  ];
-
-  const toggleInterest = (interest: string) => {
-    setSelectedInterests((prev) =>
-      prev.includes(interest)
-        ? prev.filter((i) => i !== interest)
-        : [...prev, interest],
-    );
-  };
-
+export default function ChooseHobbiesContainer() {
+  const [selectedHobbies, setSelectedHobbies] = useState<number[]>([]);
   const router = useRouter();
   const searchParams = useSearchParams();
   const origin = searchParams.get("origin") || "auth";
 
-  // Формируем ссылку перехода в зависимости от источника
   const continueLink =
     origin === "auth"
-      ? `/choose/hobbies?origin=auth`
+      ? `/choose/music?origin=auth`
       : `/profile/edit?origin=profile`;
 
-  const handleContinue = async () => {
-    if (selectedInterests.length === 0) return;
-    console.log("Selected interests:", selectedInterests);
-    try {
-      // Отправка выбранных интересов на сервер
-      const response = await fetch("/api/save-interests/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          // Если используется JWT, можно добавить:
-          // "Authorization": `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({ interests: selectedInterests }),
+  // Запрос всех хобби
+  const { data: allHobbies = [] } = useQuery<SelectionItem[]>({
+    queryKey: ["hobbies"],
+    queryFn: async () => {
+      const res = await api.get("/interests/hobbylist/");
+      return res.data;
+    },
+  });
+
+  // Запрос хобби, выбранных пользователем
+  const { data: userHobbies = [] } = useQuery({
+    queryKey: ["user-hobbies"],
+    queryFn: async () => {
+      const token = localStorage.getItem("accessToken");
+      const res = await api.get("/interests/userhobbies/", {
+        headers: { Authorization: `Bearer ${token}` },
       });
-      if (!response.ok) {
-        throw new Error("Ошибка сохранения интересов");
-      }
-    } catch (error) {
-      console.error("Ошибка при сохранении интересов:", error);
-      return;
+      return res.data;
+    },
+  });
+
+  // Mutation для сохранения хобби (PUT-запрос)
+  const saveHobbiesMutation = useMutation({
+    mutationFn: async (hobby_ids: number[]) => {
+      const token = localStorage.getItem("accessToken");
+      return api.put(
+        "/interests/userhobbies/",
+        { hobby_ids },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+    },
+    onSuccess: () => {
+      router.push(continueLink);
+    },
+    onError: (err) => {
+      console.error("Ошибка при сохранении хобби:", err);
+    },
+  });
+
+  useEffect(() => {
+    if (userHobbies.length > 0) {
+      // Предполагается, что каждый элемент userHobbies имеет поле hobby с вложенным объектом
+      const selected = userHobbies.map((uh: any) => uh.hobby.id);
+      setSelectedHobbies(selected);
     }
-    router.push(continueLink);
+  }, [userHobbies]);
+
+  const toggleHobby = (id: number) => {
+    setSelectedHobbies((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
+    );
+  };
+
+  const handleContinue = () => {
+    if (selectedHobbies.length < 2) return;
+    saveHobbiesMutation.mutate(selectedHobbies);
   };
 
   return (
     <div className="flex flex-col items-center justify-center space-y-6">
       <div className="mb-6 text-center">
-        <h2 className="text-2xl font-bold">Выберите ваши интересы</h2>
+        <h2 className="text-2xl font-bold">Выберите ваши хобби</h2>
       </div>
-      <InterestsSelectionContainer>
+      <SelectionContainer>
         <SelectionGrid
-          items={interests}
-          selectedItems={selectedInterests}
-          onToggle={toggleInterest}
+          items={allHobbies}
+          selectedItems={selectedHobbies}
+          onToggle={toggleHobby}
         />
-      </InterestsSelectionContainer>
+      </SelectionContainer>
       <div className="w-full max-w-xs">
         <Button
           onClick={handleContinue}
-          disabled={selectedInterests.length === 0}
+          disabled={selectedHobbies.length < 2}
           className={
-            selectedInterests.length === 0
-              ? "opacity-50 cursor-not-allowed"
-              : ""
+            selectedHobbies.length < 2 ? "opacity-50 cursor-not-allowed" : ""
           }
         >
           Продолжить
