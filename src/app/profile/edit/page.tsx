@@ -1,52 +1,104 @@
+// app/profile/edit/page.tsx
 "use client";
-import React, { useState } from "react";
-import Link from "next/link";
+
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import api from "src/shared/lib/axios";
 import Header from "src/components/layout/Header";
 import AvatarUploader from "src/features/profile/ui/AvatarUploader";
-import NameInput from "src/features/profile/ui/NameInput";
 import InputField from "src/components/ui/InputField";
 import Button from "src/components/ui/Button";
-import useProfileEditor from "src/features/profile/logic/useProfileEditor";
+
+interface ProfileData {
+  user: {
+    username: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+  };
+  photo: string;
+  gender: "male" | "female" | null;
+}
 
 export default function EditProfilePage() {
-  const {
-    avatar,
-    name,
-    surname,
-    email,
-    gender,
-    updateAvatar,
-    updateName,
-    updateSurname,
-    updateEmail,
-    updateGender,
-    submitProfileChanges,
-    logout,
-  } = useProfileEditor();
   const router = useRouter();
+  const qc = useQueryClient();
   const [saveMessage, setSaveMessage] = useState("");
 
-  const handleSubmit = async () => {
-    try {
-      await submitProfileChanges(); // Отправка данных на сервер
+  // исходный профиль
+  const { data: profile, isLoading } = useQuery<ProfileData>({
+    queryKey: ["profile"],
+    queryFn: () => api.get("/users/profile/").then((r) => r.data),
+    refetchOnWindowFocus: false,
+  });
+
+  // локальные поля — пустые по умолчанию
+  const [username, setUsername] = useState<string | null>(null);
+  const [firstName, setFirstName] = useState<string | null>(null);
+  const [lastName, setLastName] = useState<string | null>(null);
+  const [email, setEmail] = useState<string | null>(null);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [gender, setGender] = useState<"male" | "female" | "" | null>(null);
+
+  // заполняем локальный стейт исходными значениями
+  useEffect(() => {
+    if (profile) {
+      setUsername(profile.user.username);
+      setFirstName(profile.user.first_name);
+      setLastName(profile.user.last_name);
+      setEmail(profile.user.email);
+      setPhotoUrl(profile.photo);
+      setGender(profile.gender || "");
+    }
+  }, [profile]);
+
+  // мутация
+  const mutation = useMutation({
+    mutationFn: async () => {
+      // если какое‑то поле в локальном стейте вдруг null (не инициализировалось), берём из profile
+      const payloadUser: any = {};
+      if (username !== profile?.user.username) {
+        payloadUser.username = username;
+      }
+      payloadUser.first_name = firstName;
+      payloadUser.last_name = lastName;
+      payloadUser.email = email;
+
+      const payload = {
+        user: payloadUser,
+        photo: photoUrl,
+        gender: gender || null,
+      };
+      return api.patch("/users/profile/", payload);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["profile"] });
       setSaveMessage("Изменения сохранены");
       setTimeout(() => {
         setSaveMessage("");
         router.push("/profile");
-      }, 3000);
-    } catch (error) {
-      console.error(error);
-      // Здесь можно добавить обработку ошибки (например, установить сообщение об ошибке)
-    }
+      }, 2000);
+    },
+  });
+
+  if (isLoading || !profile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        Загрузка...
+      </div>
+    );
+  }
+
+  const handleSubmit = () => {
+    mutation.mutate();
   };
 
   return (
     <div className="min-h-screen bg-gray-100">
       <Header />
-      {/* Уведомление о сохранении изменений */}
       {saveMessage && (
-        <div className="fixed top-20 right-4 bg-green-500 text-white px-4 py-2 rounded transition-opacity duration-1000">
+        <div className="fixed top-20 right-4 bg-green-500 text-white px-4 py-2 rounded">
           {saveMessage}
         </div>
       )}
@@ -54,42 +106,59 @@ export default function EditProfilePage() {
         <h1 className="text-3xl font-bold mb-6 text-center">
           Редактировать профиль
         </h1>
-        {/* Загрузка аватара */}
+
+        {/* AvatarUploader для превью, но в payload уйдёт photoUrl */}
         <AvatarUploader
-          avatarUrl={avatar ? URL.createObjectURL(avatar) : undefined}
-          onFileChange={updateAvatar}
+          avatarUrl={photoUrl!}
+          onFileChange={(file) => {
+            // const reader = new FileReader();
+            // reader.onload = () => {
+            //   if (typeof reader.result === "string") {
+            //     setPhotoUrl(reader.result);
+            //   }
+            // };
+            // reader.readAsDataURL(file);
+          }}
         />
-        {/* Изменение имени */}
-        <NameInput name={name} onNameChange={updateName} />
-        {/* Изменение фамилии */}
+
+        <InputField
+          label="Логин"
+          type="text"
+          placeholder="Введите логин"
+          value={username!}
+          onChange={(e) => setUsername(e.target.value)}
+        />
+
+        <InputField
+          label="Имя"
+          type="text"
+          placeholder="Введите имя"
+          value={firstName!}
+          onChange={(e) => setFirstName(e.target.value)}
+        />
+
         <InputField
           label="Фамилия"
           type="text"
           placeholder="Введите фамилию"
-          value={surname}
-          onChange={(e) => updateSurname(e.target.value)}
+          value={lastName!}
+          onChange={(e) => setLastName(e.target.value)}
         />
-        {/* Изменение email */}
+
         <InputField
           label="Email"
           type="email"
           placeholder="Введите email"
-          value={email}
-          onChange={(e) => updateEmail(e.target.value)}
+          value={email!}
+          onChange={(e) => setEmail(e.target.value)}
         />
-        {/* Выбор пола */}
+
         <div className="mb-4">
           <label className="block mb-1 font-medium">Пол</label>
           <select
-            value={gender || ""}
-            onChange={(e) =>
-              updateGender(
-                e.target.value
-                  ? (e.target.value as "male" | "female")
-                  : undefined,
-              )
-            }
-            className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring focus:border-blue-300"
+            value={gender!}
+            onChange={(e) => setGender(e.target.value as any)}
+            className="w-full p-2 border rounded"
           >
             <option value="">Не выбран</option>
             <option value="male">Мужской</option>
@@ -97,44 +166,31 @@ export default function EditProfilePage() {
           </select>
         </div>
 
-        {/* Ссылки для изменения выбора (музыкальные вкусы, хобби, интересы) */}
-        <div className="mb-4">
-          <p className="text-gray-700 mb-2">Музыкальные вкусы</p>
-          <Link
-            href="/choose/music?origin=profile/edit"
-            className="text-blue-500 hover:underline"
-          >
-            Изменить музыкальные вкусы
-          </Link>
-        </div>
-        <div className="mb-4">
-          <p className="text-gray-700 mb-2">Хобби</p>
-          <Link
-            href="/choose/hobbies?origin=profile/edit"
-            className="text-blue-500 hover:underline"
-          >
-            Изменить хобби
-          </Link>
-        </div>
-        <div className="mb-4">
-          <p className="text-gray-700 mb-2">Интересы</p>
-          <Link
+        <div className="flex justify-between space-y-2 mb-6">
+          <a
             href="/choose/interests?origin=profile/edit"
             className="text-blue-500 hover:underline"
           >
             Изменить интересы
-          </Link>
+          </a>
+          <a
+            href="/choose/hobbies?origin=profile/edit"
+            className="text-blue-500 hover:underline"
+          >
+            Изменить хобби
+          </a>
+          <a
+            href="/choose/music?origin=profile/edit"
+            className="text-blue-500 hover:underline"
+          >
+            Изменить музыкальные вкусы
+          </a>
         </div>
-        <span
-          onClick={logout}
-          className="mb-2 text-red-500 cursor-pointer hover:underline"
-        >
-          Выйти из аккаунта
-        </span>
 
-        {/* Нижняя панель: сохранение изменений */}
-        <div className="flex justify-between mt-6">
-          <Button onClick={handleSubmit}>Сохранить изменения</Button>
+        <div className="flex justify-between">
+          <Button onClick={handleSubmit} disabled={mutation.isPending}>
+            {mutation.isPending ? "Сохранение..." : "Сохранить изменения"}
+          </Button>
         </div>
       </div>
     </div>
