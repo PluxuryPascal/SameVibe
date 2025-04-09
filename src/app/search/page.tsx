@@ -25,7 +25,7 @@ export default function SearchPage() {
     async function fetchUsers() {
       try {
         // Пример запроса к API. Передавайте параметры фильтрации и категорию поиска, если необходимо.
-        // const res = await fetch(`/api/search/?category=${currentCategory}&query=${query}&gender=${gender}`);
+        // const res = await fetch(/api/search/?category=${currentCategory}&query=${query}&gender=${gender});
         // if (!res.ok) {
         //   throw new Error("Ошибка получения списка пользователей");
         // }
@@ -85,7 +85,7 @@ export default function SearchPage() {
 
   // Фильтрация по введённому запросу (по имени + фамилии)
   const filteredResults = results.filter((user) => {
-    const fullName = `${user.name} ${user.surname}`.toLowerCase();
+    const fullName = ${user.name} ${user.surname}.toLowerCase();
     return fullName.includes(query.toLowerCase());
   });
 
@@ -109,7 +109,7 @@ export default function SearchPage() {
 
   // Функция для добавления в друзья
   const handleAddFriend = (name: string) => {
-    console.log(`Добавляем ${name} в друзья`);
+    console.log(Добавляем ${name} в друзья);
     // Здесь можно добавить вызов API для отправки запроса на добавление в друзья
   };
 
@@ -152,8 +152,8 @@ export default function SearchPage() {
           {finalResults.map((user, idx) => (
             <SearchResultCard
               key={idx}
-              name={`${user.name} ${user.surname}`}
-              description={`Совместимость: ${user.compatibility}%`}
+              name={${user.name} ${user.surname}}
+              description={Совместимость: ${user.compatibility}%}
               isFriend={user.isFriend}
               onAddFriend={() => handleAddFriend(user.name)}
             />
