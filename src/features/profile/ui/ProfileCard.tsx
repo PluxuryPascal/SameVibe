@@ -6,12 +6,14 @@ import api from "src/shared/lib/axios";
 import Image from "next/image";
 import Button from "@/components/ui/Button";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface ProfileData {
   user: {
     username: string;
     first_name: string;
     last_name: string;
+    email: string;
   };
   photo: string;
   gender: string;
@@ -23,6 +25,8 @@ interface NamedItem {
 }
 
 export default function ProfileCard() {
+  const router = useRouter();
+
   const {
     data: profile,
     error: profileError,
@@ -45,6 +49,7 @@ export default function ProfileCard() {
       const res = await api.get("/interests/userinterests/", {
         headers: { Authorization: `Bearer ${token}` },
       });
+      // Предполагается, что сервер возвращает объекты с вложенным объектом interest
       return res.data.map((item: any) => item.interest);
     },
   });
@@ -70,6 +75,14 @@ export default function ProfileCard() {
       return res.data.map((item: any) => item.genre);
     },
   });
+
+  // Функция для очистки токенов и выхода пользователя
+  const handleLogout = () => {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    // Перенаправление на страницу логина
+    router.push("/auth/login");
+  };
 
   if (profileLoading) return <div>Загрузка...</div>;
   if (profileError)
@@ -118,10 +131,15 @@ export default function ProfileCard() {
         </ul>
       </div>
 
-      <div className="mt-6">
+      <div className="mt-6 flex justify-around">
         <Link href="/profile/edit">
           <Button>Редактировать профиль</Button>
         </Link>
+      </div>
+      <div className="mt-2 flex justify-around">
+        <Button className="bg-red-500 hover:bg-red-600" onClick={handleLogout}>
+          Выйти
+        </Button>
       </div>
     </div>
   );
