@@ -49,7 +49,7 @@ export default function RegisterPage() {
     onError: (err) => {
       const data = err.response?.data;
       if (data?.user?.username?.length) {
-        setServerError(data.user.username[0]);
+        setServerError("Пользователь с таким логином уже существует");
       } else {
         setServerError(err.response?.data?.detail || "Ошибка при регистрации");
       }
