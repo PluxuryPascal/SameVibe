@@ -1,11 +1,12 @@
 "use client";
+
 import React from "react";
 
 export type FriendsTab = "received" | "sended" | "accepted";
 
 interface FriendsTabsProps {
   current: FriendsTab;
-  onChange: (tab: FriendsTabsProps["current"]) => void;
+  onChange: (tab: FriendsTab) => void;
 }
 
 export default function FriendsTabs({ current, onChange }: FriendsTabsProps) {
@@ -16,15 +17,15 @@ export default function FriendsTabs({ current, onChange }: FriendsTabsProps) {
   ];
 
   return (
-    <div className="flex space-x-4 justify-center mb-6">
+    <div className="flex space-x-4 mb-4">
       {tabs.map((t) => (
         <button
           key={t.key}
           onClick={() => onChange(t.key)}
-          className={`px-4 py-2 rounded-t-xl ${
+          className={`flex-1 px-4 py-2 rounded ${
             current === t.key
-              ? "bg-white border-t border-x border-gray-300"
-              : "bg-gray-200"
+              ? "bg-blue-500 text-white"
+              : "bg-gray-200 text-gray-800"
           }`}
         >
           {t.label}

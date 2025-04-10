@@ -1,165 +1,157 @@
-// "use client";
-// import React, { useState, useEffect } from "react";
-// import Header from "src/components/layout/Header";
-// import InputField from "src/components/ui/InputField";
-// import SearchResultCard from "src/features/search/ui/SearchResultCard";
-// import SearchFilterTabs, {
-//   SearchCategory,
-// } from "src/features/search/ui/SearchFilterTabs";
-// import SearchAdvancedFilter, {
-//   SortOrder,
-//   GenderFilter,
-// } from "src/features/search/ui/SearchAdvancedFilter";
+"use client";
 
-// export default function SearchPage() {
-//   const [query, setQuery] = useState("");
-//   const [currentCategory, setCurrentCategory] =
-//     useState<SearchCategory>("interests");
-//   const [advancedFilterOpen, setAdvancedFilterOpen] = useState(false);
-//   const [sortOrder, setSortOrder] = useState<SortOrder>("desc"); // по умолчанию сортировка по убыванию совместимости
-//   const [gender, setGender] = useState<GenderFilter>("all");
-//   const [results, setResults] = useState<any[]>([]);
+import React, { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import api from "src/shared/lib/axios";
+import Header from "src/components/layout/Header";
+import InputField from "src/components/ui/InputField";
+import SearchResultCard from "src/features/search/ui/SearchResultCard";
+import SearchFilterTabs, {
+  SearchCategory,
+} from "src/features/search/ui/SearchFilterTabs";
 
-//   // Получение списка пользователей с сервера
-//   useEffect(() => {
-//     async function fetchUsers() {
-//       try {
-//         // Пример запроса к API. Передавайте параметры фильтрации и категорию поиска, если необходимо.
-//         // const res = await fetch(/api/search/?category=${currentCategory}&query=${query}&gender=${gender});
-//         // if (!res.ok) {
-//         //   throw new Error("Ошибка получения списка пользователей");
-//         // }
-//         // const data = await res.json();
-//         // setResults(data);
+type UserData = {
+  id: number;
+  first_name: string;
+  last_name: string;
+  avatar: string | null;
+  gender: boolean | null; // true = male, false = female
+  percentage: number;
+  status: "incoming" | "outgoing" | "accepted" | null;
+};
 
-//         // Пока используем статические данные для тестирования:
-//         const staticData = [
-//           {
-//             name: "Иван",
-//             surname: "Иванов",
-//             interests: ["Спорт", "Музыка"],
-//             hobbies: ["Путешествия"],
-//             musicTastes: ["Рок", "Джаз"],
-//             gender: "male",
-//             isFriend: false,
-//             compatibility: 95,
-//           },
-//           {
-//             name: "Мария",
-//             surname: "Петрова",
-//             interests: ["Чтение", "Кино"],
-//             hobbies: ["Рисование"],
-//             musicTastes: ["Поп", "Классика"],
-//             gender: "female",
-//             isFriend: true,
-//             compatibility: 80,
-//           },
-//           {
-//             name: "Алексей",
-//             surname: "Сидоров",
-//             interests: ["Спорт", "Музыка", "Кино"],
-//             hobbies: ["Путешествия", "Фотография"],
-//             musicTastes: ["Рок", "Джаз"],
-//             gender: "male",
-//             isFriend: false,
-//             compatibility: 70,
-//           },
-//           {
-//             name: "Екатерина",
-//             surname: "Смирнова",
-//             interests: ["Кино", "Искусство"],
-//             hobbies: ["Рисование", "Кулинария"],
-//             musicTastes: ["Поп", "Классика"],
-//             gender: "female",
-//             isFriend: false,
-//             compatibility: 60,
-//           },
-//         ];
-//         setResults(staticData);
-//       } catch (error: any) {
-//         console.error(error.message);
-//       }
-//     }
-//     fetchUsers();
-//   }, [currentCategory, query, gender]);
+export default function SearchPage() {
+  const qc = useQueryClient();
+  const [query, setQuery] = useState("");
+  const [genderFilter, setGenderFilter] = useState<"" | "male" | "female">("");
+  const [currentCategory, setCurrentCategory] =
+    useState<SearchCategory>("interests");
 
-//   // Фильтрация по введённому запросу (по имени + фамилии)
-//   const filteredResults = results.filter((user) => {
-//     const fullName = ${user.name} ${user.surname}.toLowerCase();
-//     return fullName.includes(query.toLowerCase());
-//   });
+  const endpointMap: Record<SearchCategory, string> = {
+    interests: "interest-search",
+    hobbies: "hobby-search",
+    music: "music-search",
+  };
+  const endpoint = endpointMap[currentCategory];
 
-//   // Сортировка: сначала по коэффициенту совместимости, затем по имени, если нужно
-//   const sortedResults = filteredResults.sort((a, b) => {
-//     if (sortOrder === "desc") {
-//       return b.compatibility - a.compatibility;
-//     } else {
-//       return a.compatibility - b.compatibility;
-//     }
-//   });
+  // GET один раз при смене категории
+  const { data = [], isLoading } = useQuery<UserData[]>({
+    queryKey: ["search", currentCategory],
+    queryFn: async () => {
+      const token = localStorage.getItem("accessToken");
+      const res = await api.get(`/users/${endpoint}/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return res.data;
+    },
+  });
 
-//   // Фильтрация по полу
-//   const finalResults =
-//     gender === "all"
-//       ? sortedResults
-//       : sortedResults.filter((user) => user.gender === gender);
+  // сначала фильтрация по query, потом по полу, потом сортировка
+  const filtered = data
+    .filter((u) => {
+      const full = `${u.first_name} ${u.last_name}`.toLowerCase();
+      return full.includes(query.toLowerCase());
+    })
+    .filter((u) => {
+      if (genderFilter === "male") return u.gender === true;
+      if (genderFilter === "female") return u.gender === false;
+      return true;
+    })
+    .sort((a, b) => b.percentage - a.percentage);
 
-//   // Оценка: можно также сортировать по алфавиту, если выбран соответствующий параметр,
-//   // например, используя a.name.localeCompare(b.name) после сортировки по коэффициенту.
+  // мутации дружбы
+  const addMut = useMutation({
+    mutationFn: (id: number) =>
+      api.post(
+        "/friends/friendshiplist/",
+        { to_user: id },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        },
+      ),
+    onSuccess: () => qc.invalidateQueries(["search", currentCategory]),
+  });
+  const cancelMut = useMutation({
+    mutationFn: (id: number) =>
+      api.delete("/friends/friendship/", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+        data: { other_user_id: id },
+      }),
+    onSuccess: () => qc.invalidateQueries(["search", currentCategory]),
+  });
+  const acceptMut = useMutation({
+    mutationFn: (id: number) =>
+      api.patch(
+        "/friends/friendship/",
+        { other_user_id: id },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        },
+      ),
+    onSuccess: () => qc.invalidateQueries(["search", currentCategory]),
+  });
 
-//   // Функция для добавления в друзья
-//   const handleAddFriend = (name: string) => {
-//     console.log(Добавляем ${name} в друзья);
-//     // Здесь можно добавить вызов API для отправки запроса на добавление в друзья
-//   };
+  if (isLoading) return <div className="p-10 text-center">Загрузка...</div>;
 
-//   return (
-//     <div className="min-h-screen bg-gray-100 relative">
-//       <Header />
-//       <div className="max-w-2xl mx-auto py-10 px-4">
-//         <h2 className="text-3xl font-bold mb-6 text-center">Поиск людей</h2>
-//         {/* Переключение категорий поиска */}
-//         <SearchFilterTabs
-//           currentCategory={currentCategory}
-//           onSelectCategory={setCurrentCategory}
-//         />
-//         <div className="relative mb-10">
-//           {/* Кнопка для открытия контекстного меню фильтра */}
-//           <button
-//             onClick={() => setAdvancedFilterOpen(!advancedFilterOpen)}
-//             className="absolute right-0 -bottom-8 px-3 py-1 bg-gray-300 rounded-br-xl hover:bg-gray-400"
-//           >
-//             Фильтр ▼
-//           </button>
-//           <InputField
-//             label="Найти пользователя"
-//             type="text"
-//             placeholder="Введите имя или фамилию"
-//             value={query}
-//             onChange={(e) => setQuery(e.target.value)}
-//           />
-//           {advancedFilterOpen && (
-//             <SearchAdvancedFilter
-//               sortOrder={sortOrder}
-//               onSortOrderChange={setSortOrder}
-//               gender={gender}
-//               onGenderChange={setGender}
-//               onClose={() => setAdvancedFilterOpen(false)}
-//             />
-//           )}
-//         </div>
-//         <div>
-//           {finalResults.map((user, idx) => (
-//             <SearchResultCard
-//               key={idx}
-//               name={${user.name} ${user.surname}}
-//               description={Совместимость: ${user.compatibility}%}
-//               isFriend={user.isFriend}
-//               onAddFriend={() => handleAddFriend(user.name)}
-//             />
-//           ))}
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
+  return (
+    <div className="min-h-screen bg-gray-100 relative">
+      <Header />
+      <div className="max-w-2xl mx-auto py-10 px-4">
+        <h2 className="text-3xl font-bold mb-4 text-center">Поиск людей</h2>
+
+        <SearchFilterTabs
+          currentCategory={currentCategory}
+          onSelectCategory={setCurrentCategory}
+        />
+        <div className="sticky top-0 bg-gray-100 z-10 pt-4">
+          {/* Поиск */}
+          <div>
+            <InputField
+              label="Найти пользователя"
+              type="text"
+              placeholder="Введите имя или фамилию"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </div>
+
+          {/* Фильтр по полу */}
+          <div>
+            <select
+              className="w-full p-2 border rounded mb-2"
+              value={genderFilter}
+              onChange={(e) => setGenderFilter(e.target.value as any)}
+            >
+              <option value="">Пол: все</option>
+              <option value="male">Пол: мужской</option>
+              <option value="female">Пол: женский</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Список */}
+        <div>
+          {filtered.map((u) => (
+            <SearchResultCard
+              key={u.id}
+              name={`${u.first_name} ${u.last_name}`}
+              description={`Совместимость: ${u.percentage}%`}
+              avatar={u.avatar || undefined}
+              status={u.status}
+              onAddFriend={() => addMut.mutate(u.id)}
+              onCancel={() => cancelMut.mutate(u.id)}
+              onAccept={() => acceptMut.mutate(u.id)}
+              onWrite={() => console.log("Написать", u.id)}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
