@@ -1,52 +1,43 @@
 "use client";
-import React from "react";
+
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Header from "src/components/layout/Header";
+import FriendsTabs, { FriendsTab } from "src/features/friends/ui/FriendsTabs";
 import FriendCard from "src/features/friends/ui/FriendCard";
-import Button from "src/components/ui/Button";
 import api from "src/shared/lib/axios";
 
-// Определяем тип данных, получаемых с сервера (сериализатор FriendshipSerializer)
 interface FriendshipData {
   from_user: number;
   to_user: number;
   status: "accepted" | "sended";
-  // Можно добавить дополнительные поля, если сервер возвращает имя, аватар и т.д.
+  // можно добавить поля name, avatar, если сервер отдаёт
 }
 
 export default function FriendsPage() {
   const router = useRouter();
-  // Предполагается, что текущий пользователь сохранён в localStorage после авторизации
+  const queryClient = useQueryClient();
   const currentUserId = Number(localStorage.getItem("currentUserId"));
+  const [currentTab, setCurrentTab] = useState<FriendsTab>("accepted");
 
-  // Получение списка записей дружбы для текущего пользователя
   const {
-    data: friendships = [],
+    data = [],
     isLoading,
     error,
   } = useQuery<FriendshipData[]>({
-    queryKey: ["friendships"],
+    queryKey: ["friendships", currentTab],
     queryFn: async () => {
       const token = localStorage.getItem("accessToken");
       const res = await api.get("/friends/friendshiplist/", {
         headers: { Authorization: `Bearer ${token}` },
+        params: { cat: currentTab },
       });
-      return res.data;
+      return res.data as FriendshipData[];
     },
-    refetchOnWindowFocus: false,
+    keepPreviousData: true,
   });
 
-  // Разделяем записи дружбы на группы
-  const incomingRequests = friendships.filter(
-    (fs) => fs.status === "sended" && fs.from_user !== currentUserId,
-  );
-  const outgoingRequests = friendships.filter(
-    (fs) => fs.status === "sended" && fs.from_user === currentUserId,
-  );
-  const acceptedFriends = friendships.filter((fs) => fs.status === "accepted");
-
-  // Мутация для удаления дружбы, которая используется как для отклонения/отмены заявки, так и для удаления друга.
   const deleteMutation = useMutation({
     mutationFn: async (otherUserId: number) => {
       const token = localStorage.getItem("accessToken");
@@ -56,14 +47,11 @@ export default function FriendsPage() {
       });
     },
     onSuccess: () => {
-      router.refresh(); // Перезапросить данные после успешного удаления
-    },
-    onError: (err) => {
-      console.error("Ошибка при удалении дружбы:", err);
+      router.refresh();
+      queryClient.invalidateQueries(["friendships", currentTab]);
     },
   });
 
-  // Мутация для принятия входящей заявки
   const acceptMutation = useMutation({
     mutationFn: async (otherUserId: number) => {
       const token = localStorage.getItem("accessToken");
@@ -75,16 +63,12 @@ export default function FriendsPage() {
     },
     onSuccess: () => {
       router.refresh();
-    },
-    onError: (err) => {
-      console.error("Ошибка при принятии заявки:", err);
+      queryClient.invalidateQueries(["friendships", currentTab]);
     },
   });
 
-  // Функция перехода в чат с другом
-  const handleWriteMessage = (otherUserId: number) => {
-    router.push(`/chats?friendId=${otherUserId}`);
-  };
+  const handleWrite = (otherId: number) =>
+    router.push(`/chats?friendId=${otherId}`);
 
   if (isLoading) {
     return (
@@ -93,7 +77,6 @@ export default function FriendsPage() {
       </div>
     );
   }
-
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center text-red-500">
@@ -102,69 +85,53 @@ export default function FriendsPage() {
     );
   }
 
+  // Преобразуем currentTab в friendshipType
+  const mapType = (tab: FriendsTab): "incoming" | "outgoing" | "accepted" => {
+    if (tab === "received") return "incoming";
+    if (tab === "sended") return "outgoing";
+    return "accepted";
+  };
+
   return (
     <div className="min-h-screen bg-gray-100">
       <Header />
       <div className="max-w-2xl mx-auto py-10">
         <h2 className="text-3xl font-bold mb-6 text-center">Друзья</h2>
 
-        {/* Раздел входящих заявок */}
-        <div className="mb-8">
-          <h3 className="text-2xl font-semibold mb-4">Входящие заявки</h3>
-          {incomingRequests.length > 0 ? (
-            incomingRequests.map((fs) => (
-              <FriendCard
-                key={`incoming-${fs.from_user}`}
-                name={`Пользователь ${fs.from_user}`} // В идеале, подставлять имя, если оно доступно
-                friendshipType="incoming"
-                onAccept={() => acceptMutation.mutate(fs.from_user)}
-                onRejectOrCancel={() => deleteMutation.mutate(fs.from_user)}
-              />
-            ))
-          ) : (
-            <div className="text-center font-bold">Входящих заявок нет</div>
-          )}
-        </div>
+        <FriendsTabs current={currentTab} onChange={setCurrentTab} />
 
-        {/* Раздел исходящих заявок */}
-        <div className="mb-8">
-          <h3 className="text-2xl font-semibold mb-4">Исходящие заявки</h3>
-          {outgoingRequests.length > 0 ? (
-            outgoingRequests.map((fs) => (
-              <FriendCard
-                key={`outgoing-${fs.to_user}`}
-                name={`Пользователь ${fs.to_user}`}
-                friendshipType="outgoing"
-                onRejectOrCancel={() => deleteMutation.mutate(fs.to_user)}
-              />
-            ))
+        <div className="bg-white p-4 rounded-b-xl shadow">
+          {data.length === 0 ? (
+            <div className="text-center py-6 font-bold">
+              {currentTab === "received" && "Входящих заявок нет"}
+              {currentTab === "sended" && "Исходящих заявок нет"}
+              {currentTab === "accepted" && "Друзей нет"}
+            </div>
           ) : (
-            <div className="text-center font-bold">Исходящих заявок нет</div>
-          )}
-        </div>
+            data.map((fs) => {
+              // определяем id другого пользователя
+              const otherId =
+                currentTab === "sended"
+                  ? fs.to_user
+                  : fs.from_user === currentUserId
+                    ? fs.to_user
+                    : fs.from_user;
 
-        {/* Раздел друзья */}
-        <div className="mb-8">
-          <h3 className="text-2xl font-semibold mb-4">Друзья</h3>
-          {acceptedFriends.length > 0 ? (
-            acceptedFriends.map((fs) => {
-              // Определяем идентификатор другого пользователя
-              const otherUserId =
-                fs.from_user === currentUserId ? fs.to_user : fs.from_user;
+              const type = mapType(currentTab);
+
               return (
                 <FriendCard
-                  key={`friend-${otherUserId}`}
-                  name={`Пользователь ${otherUserId}`}
-                  friendshipType="accepted"
-                  onWrite={() => handleWriteMessage(otherUserId)}
-                  onRejectOrCancel={() => deleteMutation.mutate(otherUserId)}
+                  key={`${currentTab}-${otherId}`}
+                  name={`Пользователь ${otherId}`}
+                  friendshipType={type}
+                  onAccept={() =>
+                    type === "incoming" && acceptMutation.mutate(otherId)
+                  }
+                  onRejectOrCancel={() => deleteMutation.mutate(otherId)}
+                  onWrite={() => type === "accepted" && handleWrite(otherId)}
                 />
               );
             })
-          ) : (
-            <div className="text-center font-bold">
-              У вас пока нет друзей. Добавьте их, чтобы начать общаться!
-            </div>
           )}
         </div>
       </div>
