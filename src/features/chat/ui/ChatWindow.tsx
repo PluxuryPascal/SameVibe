@@ -1,118 +1,117 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import api from "src/shared/lib/axios";
+import { useWebSocket } from "src/shared/lib/useWebSocket";
 
 interface Message {
-  sender: string;
-  text: string;
-  time: string;
-}
-
-interface Chat {
   id: number;
-  chatName: string;
-  messages: Message[];
+  text: string;
+  sender: number;
+  created_at: string;
+  sender_info: { first_name: string; last_name: string; avatar: string | null };
 }
 
-interface ChatWindowProps {
-  chat: Chat;
+interface Props {
+  chatId: number;
 }
 
-export default function ChatWindow({ chat }: ChatWindowProps) {
-  const [newMessage, setNewMessage] = useState("");
-  const [attachedFile, setAttachedFile] = useState<File | null>(null);
+export default function ChatWindow({ chatId }: Props) {
+  const qc = useQueryClient();
+  const bottomRef = useRef<HTMLDivElement>(null);
 
-  // TODO: Реализовать подключение к WebSocket для получения сообщений в режиме реального времени
-  /*
+  const { data: msgs = [] } = useQuery<Message[]>({
+    queryKey: ["messages", chatId],
+    queryFn: async () => {
+      const res = await api.get(`/chats/${chatId}/contents/`, {
+        headers: authHeader(),
+      });
+      return res.data;
+    },
+  });
+
+  const sendMut = useMutation({
+    mutationFn: (text: string) =>
+      api.post(
+        `/chats/${chatId}/contents/`,
+        { text },
+        { headers: authHeader() },
+      ),
+    onSuccess: () => {
+      // не нужно вручную invalidation, т.к. WebSocket пришлёт сообщение
+      qc.invalidateQueries(["messages", chatId]);
+    },
+  });
+
+  useWebSocket(
+    `ws://${location.host.replace(/^http/, "ws")}/ws/chat/${chatId}/`,
+    () => qc.invalidateQueries(["messages", chatId]),
+  );
+
   useEffect(() => {
-    const socket = new WebSocket("ws://yourserver/ws/chats/" + chat.id + "/");
-    socket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      // Обновите состояние сообщений, например, добавив новое сообщение:
-      // setMessages(prev => [...prev, data.message]);
-    };
-    return () => socket.close();
-  }, [chat.id]);
-  */
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [msgs]);
 
-  const handleSend = async (e: React.FormEvent) => {
+  const [text, setText] = useState("");
+  const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
-
-    // TODO: Отправить сообщение на сервер через WebSocket или fetch
-    /*
-    const payload = { chatId: chat.id, text: newMessage, attachedFile };
-    // Если используете WebSocket:
-    socket.send(JSON.stringify(payload));
-    // Или отправка через fetch:
-    await fetch(`/api/chats/${chat.id}/send/`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    */
-    console.log("Sending message:", newMessage, attachedFile);
-    setNewMessage("");
-    setAttachedFile(null);
+    if (!text.trim()) return;
+    sendMut.mutate(text);
+    setText("");
   };
 
   return (
     <div className="flex flex-col h-full">
-      {/* Заголовок чата */}
-      <div className="border-b border-gray-200 p-4">
-        <h2 className="text-2xl font-bold">{chat.chatName}</h2>
-      </div>
-      {/* Область сообщений */}
-      <div className="flex-1 p-4 overflow-y-auto space-y-4">
-        {chat.messages.map((msg, idx) => (
-          <div
-            key={idx}
-            className={`mb-2 flex ${
-              msg.sender === "Вы" ? "justify-end" : "justify-start"
-            }`}
-          >
-            <div className="max-w-xs p-2 rounded-lg bg-gray-100">
-              <p className="text-gray-800">
-                {msg.sender !== "Вы" && <strong>{msg.sender}: </strong>}
-                {msg.text}
-              </p>
-              <p className="text-xs text-gray-500 text-right">{msg.time}</p>
+      <div className="flex-1 p-4 overflow-auto">
+        {msgs.map((m) => {
+          const isMe = m.sender === +localStorage.getItem("currentUserId")!;
+          return (
+            <div
+              key={m.id}
+              className={`flex mb-2 ${isMe ? "justify-end" : "justify-start"}`}
+            >
+              <div
+                className={`p-2 rounded-lg max-w-xs ${
+                  isMe ? "bg-blue-200" : "bg-gray-200"
+                }`}
+              >
+                {!isMe && (
+                  <strong>
+                    {m.sender_info.first_name} {m.sender_info.last_name}:{" "}
+                  </strong>
+                )}
+                {m.text}
+                <div className="text-xs text-gray-500 text-right">
+                  {new Date(m.created_at).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
+        <div ref={bottomRef} />
       </div>
-      {/* Форма ввода сообщения */}
-      <div className="border-t border-gray-200 p-4">
-        <form onSubmit={handleSend} className="flex items-center">
-          <input
-            type="text"
-            placeholder="Введите сообщение..."
-            className="flex-1 p-3 border border-gray-300 rounded-l focus:outline-none focus:ring focus:border-blue-300"
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-          />
-          <button
-            type="submit"
-            className="bg-blue-500 text-white p-3 rounded-r hover:bg-blue-600 transition-colors"
-          >
-            Отправить
-          </button>
-          <input
-            type="file"
-            onChange={(e) => {
-              if (e.target.files && e.target.files[0]) {
-                setAttachedFile(e.target.files[0]);
-              }
-            }}
-            className="hidden"
-            id="fileInput"
-          />
-          <label
-            htmlFor="fileInput"
-            className="cursor-pointer p-3 ml-2 mr-2 bg-gray-200 rounded-r hover:bg-gray-300"
-          >
-            Прикрепить
-          </label>
-        </form>
-      </div>
+      <form onSubmit={handleSend} className="flex border-t p-4 bg-white">
+        <input
+          className="flex-1 p-2 border rounded-l focus:outline-none"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="Введите сообщение..."
+        />
+        <button
+          type="submit"
+          className="px-4 bg-blue-500 text-white rounded-r hover:bg-blue-600"
+        >
+          Отправить
+        </button>
+      </form>
     </div>
   );
+}
+
+function authHeader() {
+  const token = localStorage.getItem("accessToken");
+  return { Authorization: `Bearer ${token}` };
 }
