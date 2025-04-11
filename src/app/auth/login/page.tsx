@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, UseMutationResult } from "@tanstack/react-query";
@@ -16,6 +17,7 @@ export default function LoginPage() {
 
   type LoginVars = { username: string; password: string };
 
+  // Функция проверки предпочтений пользователя (осталась без изменений)
   const checkUserPreferences = async () => {
     const interestsPromise = api.get("/interests/userinterests/");
     const hobbiesPromise = api.get("/interests/userhobbies/");
@@ -39,11 +41,24 @@ export default function LoginPage() {
         return response.data;
       },
       onSuccess: async (data) => {
+        // Сохраняем токены
         localStorage.setItem("accessToken", data.access);
         localStorage.setItem("refreshToken", data.refresh);
+
+        // Дополнительный запрос для получения id пользователя
+        try {
+          const res = await api.get("/users/userid/", {
+            headers: { Authorization: `Bearer ${data.access}` },
+          });
+          // Предполагается, что сервер возвращает число или объект { id: ... }
+          const userId = typeof res.data === "object" ? res.data.id : res.data;
+          localStorage.setItem("currentUserId", userId.toString());
+        } catch (err) {
+          console.error("Ошибка получения id пользователя", err);
+        }
+
         try {
           const { interests, hobbies, musics } = await checkUserPreferences();
-          // Если все списки пустые, значит пользователь не заполнял предпочтения
           if (
             interests.length === 0 &&
             hobbies.length === 0 &&
@@ -54,12 +69,11 @@ export default function LoginPage() {
             router.push("/chats/");
           }
         } catch (error) {
-          // Если произошла ошибка при получении предпочтений, перенаправить на выбор предпочтений
           router.push("/choose/interests?origin=auth");
         }
       },
       onError: (error: Error) => {
-        console.log(error);
+        console.error(error);
         setErrorMessage("Неверный логин или пароль");
       },
     });

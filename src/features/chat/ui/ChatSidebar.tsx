@@ -14,7 +14,7 @@ export interface ChatInfo {
     avatar: string | null;
   };
   last_message: string;
-  last_time: string;
+  last_time: string | null;
 }
 
 interface Props {
@@ -27,13 +27,13 @@ export default function ChatSidebar({ selectedId, onSelect }: Props) {
   const { data: chats = [] } = useQuery<ChatInfo[]>({
     queryKey: ["chats"],
     queryFn: async () => {
-      const res = await api.get("/chats/", { headers: authHeader() });
+      const res = await api.get("/chat/chats/", { headers: authHeader() });
       return res.data;
     },
   });
 
   useWebSocket(
-    `ws://${location.host.replace(/^http/, "ws")}/ws/chat-list/`,
+    `ws://localhost:8000/ws/chat-list/?token=${localStorage.getItem("accessToken")}`,
     () => qc.invalidateQueries(["chats"]),
   );
 
@@ -55,8 +55,8 @@ export default function ChatSidebar({ selectedId, onSelect }: Props) {
       />
       <ul className="flex-1 overflow-auto">
         {filtered.map((c) => {
-          const date = new Date(c.last_time);
-          let timeLabel = formatChatTime(date);
+          const dt = c.last_time ? new Date(c.last_time) : null;
+          const timeLabel = dt ? formatChatTime(dt) : "";
           return (
             <li
               key={c.id}
@@ -86,6 +86,7 @@ function authHeader() {
 
 function formatChatTime(d: Date) {
   const now = new Date();
+  // Если сообщение отправлено сегодня: HH:MM
   if (
     d.getDate() === now.getDate() &&
     d.getMonth() === now.getMonth() &&
@@ -93,6 +94,7 @@ function formatChatTime(d: Date) {
   ) {
     return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   }
+  // Если вчера: "Вчера"
   const yesterday = new Date(now);
   yesterday.setDate(now.getDate() - 1);
   if (
@@ -102,8 +104,8 @@ function formatChatTime(d: Date) {
   ) {
     return "Вчера";
   }
-  return `${(d.getMonth() + 1).toString().padStart(2, "0")}:${d
-    .getDate()
-    .toString()
-    .padStart(2, "0")}`;
+  // Иначе: формат "MM.DD" (месяц и число, разделённые точкой)
+  const month = (d.getMonth() + 1).toString().padStart(2, "0");
+  const day = d.getDate().toString().padStart(2, "0");
+  return `${month}.${day}`;
 }
