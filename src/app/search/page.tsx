@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "src/shared/lib/axios";
+import { useRouter } from "next/navigation";
 import Header from "src/components/layout/Header";
 import InputField from "src/components/ui/InputField";
 import SearchResultCard from "src/features/search/ui/SearchResultCard";
@@ -22,6 +23,7 @@ type UserData = {
 
 export default function SearchPage() {
   const qc = useQueryClient();
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [genderFilter, setGenderFilter] = useState<"" | "male" | "female">("");
   const [currentCategory, setCurrentCategory] =
@@ -97,6 +99,28 @@ export default function SearchPage() {
     onSuccess: () => qc.invalidateQueries(["search", currentCategory]),
   });
 
+  // Мутация для создания (или получения уже существующего) чата
+  const chatMut = useMutation({
+    mutationFn: async (otherId: number) => {
+      return api.post(
+        "/chat/chats/",
+        { to_user: otherId },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        },
+      );
+    },
+    onSuccess: (response) => {
+      const chatId = response.data.id;
+      router.push(`/chats/${chatId}`);
+    },
+    onError: (err) => {
+      console.error("Ошибка создания чата:", err);
+    },
+  });
+
   if (isLoading) return <div className="p-10 text-center">Загрузка...</div>;
 
   return (
@@ -147,7 +171,7 @@ export default function SearchPage() {
               onAddFriend={() => addMut.mutate(u.id)}
               onCancel={() => cancelMut.mutate(u.id)}
               onAccept={() => acceptMut.mutate(u.id)}
-              onWrite={() => console.log("Написать", u.id)}
+              onWrite={() => chatMut.mutate(u.id)}
             />
           ))}
         </div>
