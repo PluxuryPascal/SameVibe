@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "src/shared/lib/axios";
 import ChatCard from "./ChatCard";
@@ -32,10 +32,19 @@ export default function ChatSidebar({ selectedId, onSelect }: Props) {
     },
   });
 
-  useWebSocket(
-    `ws://localhost:8000/ws/chat-list/?token=${localStorage.getItem("accessToken")}`,
-    () => qc.invalidateQueries(["chats"]),
-  );
+  const [wsUrl, setWsUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const token = localStorage.getItem("accessToken");
+    if (token) {
+      setWsUrl(`ws://localhost:8000/ws/chat-list/?token=${token}`);
+    }
+  }, []);
+
+  useWebSocket(wsUrl, () => qc.invalidateQueries(["chats"]), {
+    enabled: !!wsUrl,
+  });
 
   const [search, setSearch] = useState("");
   const filtered = chats.filter((c) =>
@@ -80,13 +89,13 @@ export default function ChatSidebar({ selectedId, onSelect }: Props) {
 }
 
 function authHeader() {
-  const token = localStorage.getItem("accessToken");
-  return { Authorization: `Bearer ${token}` };
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("accessToken") : "";
+  return { Authorization: token ? `Bearer ${token}` : "" };
 }
 
 function formatChatTime(d: Date) {
   const now = new Date();
-  // Если сообщение отправлено сегодня: HH:MM
   if (
     d.getDate() === now.getDate() &&
     d.getMonth() === now.getMonth() &&
@@ -94,7 +103,6 @@ function formatChatTime(d: Date) {
   ) {
     return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   }
-  // Если вчера: "Вчера"
   const yesterday = new Date(now);
   yesterday.setDate(now.getDate() - 1);
   if (
@@ -104,7 +112,6 @@ function formatChatTime(d: Date) {
   ) {
     return "Вчера";
   }
-  // Иначе: формат "MM.DD" (месяц и число, разделённые точкой)
   const month = (d.getMonth() + 1).toString().padStart(2, "0");
   const day = d.getDate().toString().padStart(2, "0");
   return `${month}.${day}`;
