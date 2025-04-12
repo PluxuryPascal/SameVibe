@@ -14,16 +14,32 @@ export interface ChatInfo {
     avatar: string | null;
   };
   last_message: string;
+  last_message_sender_id: number;
   last_time: string | null;
 }
 
-interface Props {
+interface ChatSidebarProps {
   selectedId: number | null;
   onSelect: (id: number) => void;
 }
 
-export default function ChatSidebar({ selectedId, onSelect }: Props) {
+export default function ChatSidebar({
+  selectedId,
+  onSelect,
+}: ChatSidebarProps) {
   const qc = useQueryClient();
+
+  // Загрузка текущего userId из localStorage
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedId = localStorage.getItem("currentUserId");
+      if (storedId) {
+        setCurrentUserId(Number(storedId));
+      }
+    }
+  }, []);
+
   const { data: chats = [] } = useQuery<ChatInfo[]>({
     queryKey: ["chats"],
     queryFn: async () => {
@@ -33,9 +49,7 @@ export default function ChatSidebar({ selectedId, onSelect }: Props) {
   });
 
   const [wsUrl, setWsUrl] = useState<string | null>(null);
-
   useEffect(() => {
-    if (typeof window === "undefined") return;
     const token = localStorage.getItem("accessToken");
     if (token) {
       setWsUrl(`ws://localhost:8000/ws/chat-list/?token=${token}`);
@@ -53,8 +67,16 @@ export default function ChatSidebar({ selectedId, onSelect }: Props) {
       .includes(search.toLowerCase()),
   );
 
+  // Если currentUserId ещё не загружен, показываем индикатор загрузки
+  if (currentUserId === null) {
+    return <div className="p-4 text-center">Загрузка...</div>;
+  }
+
   return (
-    <aside className="w-1/4 border-r p-4 flex flex-col">
+    <aside
+      className="w-1/4 border-r p-4 flex flex-col"
+      style={{ maxHeight: "calc(100vh - 100px)" }}
+    >
       <input
         type="text"
         placeholder="Поиск чатов..."
@@ -62,10 +84,13 @@ export default function ChatSidebar({ selectedId, onSelect }: Props) {
         value={search}
         onChange={(e) => setSearch(e.target.value)}
       />
-      <ul className="flex-1 overflow-auto">
+      <ul className="flex-1 overflow-y-auto">
         {filtered.map((c) => {
           const dt = c.last_time ? new Date(c.last_time) : null;
           const timeLabel = dt ? formatChatTime(dt) : "";
+          // Если отправитель последнего сообщения равен currentUserId, то это текущее сообщение,
+          // иначе - сообщение от другого пользователя.
+          const isOther = c.last_message_sender_id !== currentUserId;
           return (
             <li
               key={c.id}
@@ -79,6 +104,7 @@ export default function ChatSidebar({ selectedId, onSelect }: Props) {
                 lastMessage={c.last_message}
                 time={timeLabel}
                 avatar={c.other_user.avatar || undefined}
+                isOther={isOther}
               />
             </li>
           );
@@ -89,8 +115,7 @@ export default function ChatSidebar({ selectedId, onSelect }: Props) {
 }
 
 function authHeader() {
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("accessToken") : "";
+  const token = localStorage.getItem("accessToken");
   return { Authorization: token ? `Bearer ${token}` : "" };
 }
 
@@ -112,7 +137,7 @@ function formatChatTime(d: Date) {
   ) {
     return "Вчера";
   }
-  const month = (d.getMonth() + 1).toString().padStart(2, "0");
-  const day = d.getDate().toString().padStart(2, "0");
-  return `${month}.${day}`;
+  const mo = (d.getMonth() + 1).toString().padStart(2, "0");
+  const da = d.getDate().toString().padStart(2, "0");
+  return `${mo}.${da}`;
 }
