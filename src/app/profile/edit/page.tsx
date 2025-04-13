@@ -1,4 +1,3 @@
-// app/profile/edit/page.tsx
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -26,217 +25,267 @@ export default function EditProfilePage() {
   const qc = useQueryClient();
   const [saveMessage, setSaveMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [isAvatarLoading, setIsAvatarLoading] = useState(false);
 
-  // исходный профиль
-  const { data: profile, isLoading } = useQuery<ProfileData>({
+  // 1. Запрос профиля с обновленной обработкой ошибок
+  const {
+    data: profile,
+    isLoading,
+    error: profileError,
+  } = useQuery<ProfileData>({
     queryKey: ["profile"],
-    queryFn: () => api.get("/users/profile/").then((r) => r.data),
+    queryFn: async () => {
+      try {
+        const response = await api.get("/users/profile/");
+        return response.data;
+      } catch (error) {
+        console.error("Profile fetch error:", error);
+        throw error;
+      }
+    },
     refetchOnWindowFocus: false,
+    retry: 1,
   });
 
-  // локальные поля — пустые по умолчанию
-  const [username, setUsername] = useState<string>("");
-  const [firstName, setFirstName] = useState<string>("");
-  const [lastName, setLastName] = useState<string>("");
-  const [email, setEmail] = useState<string>("");
-  const [photoUrl, setPhotoUrl] = useState<string>("");
-  const [gender, setGender] = useState<"male" | "female" | "">("");
+  // 2. Состояния формы с валидацией
+  const [formState, setFormState] = useState({
+    username: "",
+    firstName: "",
+    lastName: "",
+    email: "",
+    photoUrl: "",
+    gender: "" as "male" | "female" | "",
+  });
 
-  // заполняем локальный стейт исходными значениями
+  // 3. Инициализация формы с защитой от null
   useEffect(() => {
     if (profile) {
-      setUsername(profile.user.username);
-      setFirstName(profile.user.first_name);
-      setLastName(profile.user.last_name);
-      setEmail(profile.user.email);
-      setPhotoUrl(profile.photo);
-      if (profile.gender === true) {
-        setGender("male");
-      } else if (profile.gender === false) {
-        setGender("female");
-      } else {
-        setGender("");
-      }
+      setFormState({
+        username: profile.user.username || "",
+        firstName: profile.user.first_name || "",
+        lastName: profile.user.last_name || "",
+        email: profile.user.email || "",
+        photoUrl: profile.photo || "",
+        gender:
+          profile.gender === true
+            ? "male"
+            : profile.gender === false
+              ? "female"
+              : "",
+      });
     }
   }, [profile]);
 
-  const validateUsername = (value: string): boolean =>
-    /^[A-Za-z0-9]+$/.test(value);
-  const validateEmail = (value: string): boolean =>
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  // 4. Валидации с улучшенной обработкой
+  const validateForm = () => {
+    const errors = [];
+    if (!/^[A-Za-z0-9]+$/.test(formState.username)) {
+      errors.push("Логин — только латиница и цифры");
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formState.email)) {
+      errors.push("Некорректный email");
+    }
+    return errors;
+  };
 
-  // мутация
+  // 5. Обновленная мутация с обработкой фото
   const mutation = useMutation({
     mutationFn: async () => {
-      // если какое‑то поле в локальном стейте вдруг null (не инициализировалось), берём из profile
-      const payloadUser: any = {};
-      if (username !== profile?.user.username) {
-        payloadUser.username = username;
-      }
-      payloadUser.first_name = firstName;
-      payloadUser.last_name = lastName;
-      payloadUser.email = email;
-
-      const payloadGender =
-        gender === "male" ? true : gender === "female" ? false : null;
-
       const payload = {
-        user: payloadUser,
-        photo: photoUrl,
-        gender: payloadGender,
+        user: {
+          username: formState.username,
+          first_name: formState.firstName,
+          last_name: formState.lastName,
+          email: formState.email,
+        },
+        photo: formState.photoUrl,
+        gender:
+          formState.gender === "male"
+            ? true
+            : formState.gender === "female"
+              ? false
+              : null,
       };
+
       return api.patch("/users/profile/", payload);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["profile"] });
       setSaveMessage("Изменения сохранены");
-      setTimeout(() => {
-        setSaveMessage("");
-        router.push("/profile");
-      }, 2000);
+      setTimeout(() => router.push("/profile"), 2000);
     },
-    onError: (err: any) => {
-      let serverMessage = "Ошибка при сохранении профиля";
-      const data = err?.response?.data;
-      if (data) {
-        // Проверяем, если ошибка для поля username есть внутри объекта user
-        if (data.user && data.user.username) {
-          // Если это массив, объединяем его в строку
-          if (Array.isArray(data.user.username)) {
-            serverMessage = data.user.username.join(" ");
-          } else {
-            serverMessage = data.user.username;
-          }
-        } else if (data.detail) {
-          // Если существует ключ detail, используем его
-          serverMessage = data.detail;
-        }
-      }
-      setErrorMessage(serverMessage);
-      console.error("Ошибка при сохранении профиля:", err);
+    onError: (error: any) => {
+      const errorData = error.response?.data;
+      const errorMessage =
+        errorData?.detail ||
+        errorData?.user?.username?.join?.(" ") ||
+        "Ошибка при сохранении профиля";
+      setErrorMessage(errorMessage);
     },
   });
 
-  if (isLoading || !profile) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        Загрузка...
-      </div>
-    );
-  }
-
+  // 6. Обработчик отправки формы
   const handleSubmit = () => {
-    if (!validateUsername(username)) {
-      setErrorMessage("Логин должен состоять только из латинских букв и цифр.");
+    const errors = validateForm();
+    if (errors.length > 0) {
+      setErrorMessage(errors.join("\n"));
       return;
     }
-    if (!validateEmail(email)) {
-      setErrorMessage("Введите корректный email.");
+
+    if (isAvatarLoading) {
+      setErrorMessage("Дождитесь завершения загрузки аватара");
       return;
     }
+
     setErrorMessage("");
     mutation.mutate();
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        Загрузка профиля...
+      </div>
+    );
+  }
+
+  if (profileError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-red-500">
+        Ошибка загрузки профиля
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-100">
       <Header />
-      {saveMessage && (
-        <div className="fixed top-20 right-4 bg-green-500 text-white px-4 py-2 rounded">
-          {saveMessage}
-        </div>
-      )}
-      {errorMessage && (
-        <div className="fixed top-20 left-4 bg-red-500 text-white px-4 py-2 rounded">
-          {errorMessage}
-        </div>
-      )}
+
+      {/* Уведомления */}
+      <div className="fixed top-20 right-4 space-y-2">
+        {saveMessage && (
+          <div className="bg-green-500 text-white px-4 py-2 rounded">
+            {saveMessage}
+          </div>
+        )}
+        {errorMessage && (
+          <div className="bg-red-500 text-white px-4 py-2 rounded">
+            {errorMessage}
+          </div>
+        )}
+      </div>
+
+      {/* Основная форма */}
       <div className="max-w-4xl mx-auto bg-white p-8 m-10 rounded shadow">
         <h1 className="text-3xl font-bold mb-6 text-center">
           Редактировать профиль
         </h1>
 
-        {/* AvatarUploader для превью, но в payload уйдёт photoUrl */}
         <AvatarUploader
-          avatarUrl={photoUrl!}
-          onFileChange={(file) => {
-            // const reader = new FileReader();
-            // reader.onload = () => {
-            //   if (typeof reader.result === "string") {
-            //     setPhotoUrl(reader.result);
-            //   }
-            // };
-            // reader.readAsDataURL(file);
+          avatarUrl={formState.photoUrl}
+          onUploadStart={() => setIsAvatarLoading(true)}
+          onUploadEnd={(url) => {
+            setFormState((prev) => ({ ...prev, photoUrl: url }));
+            setIsAvatarLoading(false);
+          }}
+          onUploadError={(error) => {
+            setIsAvatarLoading(false);
+            setErrorMessage(`Ошибка загрузки аватара: ${error}`);
           }}
         />
 
-        <InputField
-          label="Логин"
-          type="text"
-          placeholder="Введите логин"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-        />
+        {/* Поля формы */}
+        <div className="space-y-4">
+          <InputField
+            label="Логин"
+            value={formState.username}
+            onChange={(e) =>
+              setFormState((prev) => ({
+                ...prev,
+                username: e.target.value,
+              }))
+            }
+          />
 
-        <InputField
-          label="Имя"
-          type="text"
-          placeholder="Введите имя"
-          value={firstName}
-          onChange={(e) => setFirstName(e.target.value)}
-        />
+          <InputField
+            label="Имя"
+            value={formState.firstName}
+            onChange={(e) =>
+              setFormState((prev) => ({
+                ...prev,
+                firstName: e.target.value,
+              }))
+            }
+          />
 
-        <InputField
-          label="Фамилия"
-          type="text"
-          placeholder="Введите фамилию"
-          value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
-        />
+          <InputField
+            label="Фамилия"
+            value={formState.lastName}
+            onChange={(e) =>
+              setFormState((prev) => ({
+                ...prev,
+                lastName: e.target.value,
+              }))
+            }
+          />
 
-        <InputField
-          label="Email"
-          type="email"
-          placeholder="Введите email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+          <InputField
+            label="Email"
+            type="email"
+            value={formState.email}
+            onChange={(e) =>
+              setFormState((prev) => ({
+                ...prev,
+                email: e.target.value,
+              }))
+            }
+          />
 
-        <div className="mb-4">
-          <label className="block mb-1 font-medium">Пол</label>
-          <select
-            value={gender}
-            onChange={(e) => setGender(e.target.value as "male" | "female")}
-            className="w-full p-2 border rounded"
-          >
-            <option value="male">Мужской</option>
-            <option value="female">Женский</option>
-          </select>
+          <div className="mb-4">
+            <label className="block mb-1 font-medium">Пол</label>
+            <select
+              value={formState.gender}
+              onChange={(e) =>
+                setFormState((prev) => ({
+                  ...prev,
+                  gender: e.target.value as typeof formState.gender,
+                }))
+              }
+              className="w-full p-2 border rounded"
+            >
+              <option value="">Не выбран</option>
+              <option value="male">Мужской</option>
+              <option value="female">Женский</option>
+            </select>
+          </div>
         </div>
 
-        <div className="flex justify-between space-y-2 mb-6">
-          <a
-            href="/choose/interests?origin=profile/edit"
-            className="text-blue-500 hover:underline"
-          >
-            Изменить интересы
-          </a>
-          <a
-            href="/choose/hobbies?origin=profile/edit"
-            className="text-blue-500 hover:underline"
-          >
-            Изменить хобби
-          </a>
-          <a
-            href="/choose/music?origin=profile/edit"
-            className="text-blue-500 hover:underline"
-          >
-            Изменить музыкальные вкусы
-          </a>
+        {/* Ссылки */}
+        <div className="flex flex-wrap gap-4 mb-6">
+          {["interests", "hobbies", "music"].map((type) => (
+            <a
+              key={type}
+              href={`/choose/${type}?origin=profile/edit`}
+              className="text-blue-500 hover:underline"
+            >
+              Изменить{" "}
+              {
+                {
+                  interests: "интересы",
+                  hobbies: "хобби",
+                  music: "музыкальные вкусы",
+                }[type]
+              }
+            </a>
+          ))}
         </div>
 
-        <div className="flex justify-between">
-          <Button onClick={handleSubmit} disabled={mutation.isPending}>
+        {/* Кнопка отправки */}
+        <div className="flex justify-end">
+          <Button
+            onClick={handleSubmit}
+            disabled={mutation.isPending || isAvatarLoading}
+          >
             {mutation.isPending ? "Сохранение..." : "Сохранить изменения"}
           </Button>
         </div>
