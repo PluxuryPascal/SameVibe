@@ -3,17 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { CldUploadWidget } from "next-cloudinary";
-import { useQuery } from "@tanstack/react-query";
 import api from "src/shared/lib/axios";
-
-interface SignatureParams {
-  signature: string;
-  timestamp: number;
-  folder: string;
-  cloud_name: string; // Важно: точное совпадение с названием поля из API
-  api_key: string;
-  transformation: string;
-}
 
 interface AvatarUploaderProps {
   avatarUrl?: string;
@@ -24,44 +14,66 @@ interface AvatarUploaderProps {
 
 export default function AvatarUploader({
   avatarUrl,
-  onUpload,
+  onUploadStart,
+  onUploadEnd,
+  onUploadError,
 }: AvatarUploaderProps) {
   const [preview, setPreview] = useState<string | undefined>(avatarUrl);
-  const [widgetOpen, setWidgetOpen] = useState(false);
+  const [userId, setUserId] = useState<string>("");
 
-  const {
-    data: signParams,
-    refetch: fetchSignature,
-    isFetching: signing,
-    error: signatureError,
-  } = useQuery<SignatureParams>({
-    queryKey: ["avatar-signature"],
-    queryFn: async () => {
-      const token = localStorage.getItem("accessToken");
-      const res = await api.get<SignatureParams>("/users/avatar-signature/", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      console.log("Received signature params:", res.data); // Добавлено логирование
-      return res.data;
-    },
-    enabled: false,
-    retry: false,
-  });
-
+  // Получаем user_id с бэкенда (через axios-интерцепторы рефрешат токен при 401)
   useEffect(() => {
-    if (signatureError) {
-      console.error("Signature error:", signatureError);
-      alert("Ошибка подготовки загрузки");
-      setWidgetOpen(false);
-    }
-  }, [signatureError]);
+    api
+      .get<{ id: number }>("/users/userid/")
+      .then((res) => setUserId(String(res.data.id)))
+      .catch((err) => console.error("Не удалось получить user_id:", err));
+  }, []);
 
-  const handleUploadClick = () => {
-    if (!widgetOpen) {
-      fetchSignature();
-      setWidgetOpen(true);
-    }
-  };
+  // Monkey‑patch fetch для подстановки и автоматического рефреша JWT
+  useEffect(() => {
+    const originalFetch = window.fetch.bind(window);
+    window.fetch = async (input, init: RequestInit = {}) => {
+      // Подстановка accessToken из localStorage
+      const token = localStorage.getItem("accessToken");
+      init.headers = {
+        ...(init.headers || {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      };
+
+      let response = await originalFetch(input, init);
+
+      // При 401 — пробуем обновить токен
+      if (response.status === 401) {
+        try {
+          const refreshToken = localStorage.getItem("refreshToken");
+          const refreshRes = await originalFetch(
+            "http://127.0.0.1:8000/api/v1/token/refresh/",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ refresh: refreshToken }),
+            },
+          );
+          const data = await refreshRes.json();
+          const newAccess = data.access;
+          localStorage.setItem("accessToken", newAccess);
+
+          // Повторяем исходный запрос с новым токеном
+          init.headers = {
+            ...(init.headers || {}),
+            Authorization: `Bearer ${newAccess}`,
+          };
+          response = await originalFetch(input, init);
+        } catch {
+          // если рефреш не удался — возвращаем первоначальный response
+        }
+      }
+      return response;
+    };
+    return () => {
+      window.fetch = originalFetch;
+    };
+  }, []);
 
   return (
     <div className="flex flex-col items-center mb-6">
@@ -80,69 +92,42 @@ export default function AvatarUploader({
         </div>
       )}
 
-      <button
-        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-        onClick={handleUploadClick}
-        disabled={signing}
+      <CldUploadWidget
+        signatureEndpoint="http://127.0.0.1:8000/api/v1/users/avatar-signature/"
+        options={{
+          cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME!,
+          apiKey: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY!,
+          folder: userId ? `avatars/${userId}` : undefined,
+          resourceType: "image",
+          cropping: true,
+          croppingAspectRatio: 1,
+          maxFileSize: 2097152,
+          clientAllowedFormats: ["jpg", "jpeg", "png"],
+          transformation: "c_fill,g_face,w_200,h_200,q_auto,f_auto,r_20",
+        }}
+        onSuccess={(result, { widget }) => {
+          const url = result.info.secure_url;
+          setPreview(url);
+          onUploadEnd(url);
+          widget.close();
+        }}
+        onError={(error) => {
+          console.error("Upload error:", error);
+          onUploadError("Ошибка загрузки изображения");
+        }}
       >
-        {signing ? "Подготавливаем..." : "Загрузить аватар"}
-      </button>
-
-      {signParams && widgetOpen && (
-        <CldUploadWidget
-          options={{
-            cloudName: signParams.cloud_name, // Используем поле из API ответа
-            apiKey: signParams.api_key,
-            uploadSignature: signParams.signature,
-            uploadSignatureTimestamp: signParams.timestamp,
-            folder: signParams.folder,
-            cropping: true,
-            croppingAspectRatio: 1,
-            showAdvancedOptions: false,
-            resourceType: "image",
-            maxFileSize: 2097152,
-            clientAllowedFormats: ["jpg", "jpeg", "png"],
-            transformation: signParams.transformation,
-          }}
-          onSuccess={(result) => {
-            const info = result.info as { secure_url?: string };
-            if (info?.secure_url) {
-              setPreview(info.secure_url);
-              onUpload(info.secure_url);
-            }
-            setWidgetOpen(false);
-          }}
-          onError={(error) => {
-            console.error("Upload error:", error);
-            alert("Ошибка загрузки изображения");
-            setWidgetOpen(false);
-          }}
-          onClose={() => setWidgetOpen(false)}
-        >
-          {({ open }) => {
-            useEffect(() => {
-              if (signParams && widgetOpen) {
-                try {
-                  // Добавляем проверку наличия обязательных полей
-                  if (
-                    !signParams.cloud_name ||
-                    !signParams.api_key ||
-                    !signParams.signature
-                  ) {
-                    throw new Error("Missing Cloudinary credentials");
-                  }
-                  open();
-                } catch (error) {
-                  console.error("Widget open error:", error);
-                  setWidgetOpen(false);
-                }
-              }
-            }, [signParams, widgetOpen, open]);
-
-            return null;
-          }}
-        </CldUploadWidget>
-      )}
+        {({ open }) => (
+          <button
+            onClick={() => {
+              onUploadStart();
+              open(); // здесь fetch(signatureEndpoint) с JWT и авто‑рефрешем
+            }}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Загрузить аватар
+          </button>
+        )}
+      </CldUploadWidget>
     </div>
   );
 }
