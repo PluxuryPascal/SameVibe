@@ -1,14 +1,15 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import { CldUploadWidget } from "next-cloudinary";
+import api from "src/shared/lib/axios";
+import { transform } from "next/dist/build/swc/generated-native";
 
-interface AvatarUploaderProps {
-  avatarUrl?: string;
-  onUploadStart: () => void;
-  onUploadEnd: (url: string) => void;
-  onUploadError: (error: string) => void;
+interface SignatureParams {
+  signature: string;
+  timestamp: number;
+  folder: string;
 }
 
 export default function AvatarUploader({
@@ -16,49 +17,45 @@ export default function AvatarUploader({
   onUploadStart,
   onUploadEnd,
   onUploadError,
-}: AvatarUploaderProps) {
+}: {
+  avatarUrl?: string;
+  onUploadStart: () => void;
+  onUploadEnd: (url: string) => void;
+  onUploadError: (error: string) => void;
+}) {
   const [preview, setPreview] = useState<string | undefined>(avatarUrl);
+  const [signParams, setSignParams] = useState<SignatureParams | null>(null);
 
-  // userId берётся из localStorage
+  // userId в локалсторедж, как договорились
   const userId =
     typeof window !== "undefined"
       ? localStorage.getItem("currentUserId") || ""
       : "";
 
-  // 1) Патчим глобальный fetch и window.fetch
-  useEffect(() => {
-    const originalFetch = globalThis.fetch;
-    const patchedFetch = async (input: RequestInfo, init: RequestInit = {}) => {
-      // каждый раз читаем актуальный токен из localStorage
-      const token = localStorage.getItem("accessToken") || "";
-
-      init.credentials = "same-origin"; // для куки, если понадобятся
-      init.headers = {
-        ...(init.headers || {}),
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      };
-
-      return originalFetch(input, init);
-    };
-
-    globalThis.fetch = patchedFetch;
-    window.fetch = patchedFetch;
-    return () => {
-      globalThis.fetch = originalFetch;
-      window.fetch = originalFetch;
-    };
-  }, []);
+  // 1) Запрашиваем подпись у своего бэкенда через api (интерцепторы добавят JWT)
+  const prepareUpload = async () => {
+    try {
+      onUploadStart();
+      const { data } = await api.get<SignatureParams>(
+        "/users/avatar-signature/",
+      );
+      setSignParams(data);
+    } catch (err: any) {
+      console.error("Signature fetch error:", err);
+      onUploadError("Не удалось получить подпись для загрузки");
+    }
+  };
 
   return (
     <div className="flex flex-col items-center mb-6">
-      {/* 2) Превью */}
+      {/* Превью аватара */}
       {preview ? (
         <Image
           src={preview}
           alt="Avatar preview"
-          width={128}
-          height={128}
-          className="rounded-full object-cover mb-2"
+          width={200}
+          height={200}
+          className="rounded-full border-2 object-cover mb-2"
           priority
         />
       ) : (
@@ -67,41 +64,64 @@ export default function AvatarUploader({
         </div>
       )}
 
-      {/* 3) Виджет */}
-      {userId && (
+      {/* 2) Если подписи нет — кнопка «Подготовить загрузку» */}
+      {!signParams ? (
+        <button
+          onClick={prepareUpload}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Подготовить загрузку
+        </button>
+      ) : (
+        /* 3) Если подпись есть — рендерим виджет с переданными параметрами */
         <CldUploadWidget
-          signatureEndpoint="/api/avatar-signature"
-          options={{
-            cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME!,
-            apiKey: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY!,
-            folder: `avatars/${userId}`,
-            resourceType: "image",
-            cropping: true,
-            croppingAspectRatio: 1,
-            maxFileSize: 2097152,
-            clientAllowedFormats: ["jpg", "jpeg", "png"],
-            transformation: "c_fill,g_face,w_200,h_200,q_auto,f_auto,r_20",
-          }}
+          uploadPreset="samevibe"
+          options={
+            {
+              cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME!,
+              apiKey: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY!,
+              folder: signParams.folder,
+              uploadSignature: signParams.signature,
+              uploadSignatureTimestamp: signParams.timestamp,
+              resourceType: "image",
+              cropping: true,
+              croppingAspectRatio: 1,
+              maxFileSize: 2097152,
+              clientAllowedFormats: ["jpg", "jpeg", "png"],
+              transformation: [
+                {
+                  width: 200,
+                  height: 200,
+                  crop: "thumb",
+                  gravity: "face",
+                  radius: "max",
+                },
+              ],
+            } as any
+          }
           onSuccess={(result, { widget }) => {
             const url = result.info.secure_url;
             setPreview(url);
             onUploadEnd(url);
             widget.close();
+            setSignParams(null);
           }}
-          onError={(err) => {
-            console.error("Upload error:", err);
+          onError={(error) => {
+            console.error("Upload error:", error);
             onUploadError("Ошибка загрузки изображения");
+            setSignParams(null);
           }}
         >
           {({ open }) => (
             <button
               onClick={() => {
                 onUploadStart();
-                open(); // внутри будет fetch("/api/avatar-signature", ...)
+                open();
               }}
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+              type="button"
             >
-              Загрузить аватар
+              Загрузить
             </button>
           )}
         </CldUploadWidget>
