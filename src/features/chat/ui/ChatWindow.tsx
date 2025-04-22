@@ -2,12 +2,14 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "src/shared/lib/axios";
-import clsx from "clsx";
+import AttachmentUploader from "./AttachmentUploader";
 
 // Интерфейс сообщения
 interface Message {
   id: number;
   text: string;
+  attachment: string;
+  attachment_type: string;
   sender: number;
   created_at: string;
   sender_info: { first_name: string; last_name: string; avatar: string | null };
@@ -69,15 +71,29 @@ export default function ChatWindow({ chatId }: ChatWindowProps) {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editText, setEditText] = useState("");
   const currentUserId = +localStorage.getItem("currentUserId")!;
+  const [attachmentUrl, setAttachmentUrl] = useState<string | null>(null);
+  const [attachmentType, setAttachmentType] = useState<string | null>(null);
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!text.trim() || !ws || ws.readyState !== WebSocket.OPEN) {
+    if (
+      (!text.trim() && !attachmentUrl) ||
+      !ws ||
+      ws.readyState !== WebSocket.OPEN
+    ) {
       console.error("WebSocket не готов");
       return;
     }
-    ws.send(JSON.stringify({ message: text }));
+    ws.send(
+      JSON.stringify({
+        message: text,
+        attachment: attachmentUrl,
+        attachment_type: attachmentType,
+      }),
+    );
     setText("");
+    setAttachmentUrl(null);
+    setAttachmentType(null);
   };
 
   // Группировка сообщений по датам с Today/Yesterday
@@ -152,6 +168,34 @@ export default function ChatWindow({ chatId }: ChatWindowProps) {
                         </button>
                       )}
                     </div>
+                    {/* Вложение (если есть) */}
+                    {m.attachment && (
+                      <div className="mt-2">
+                        {m.attachment_type === "image" ? (
+                          <img
+                            src={m.attachment}
+                            alt="attachment"
+                            className="max-w-xs rounded"
+                          />
+                        ) : m.attachment_type === "video" ? (
+                          <video
+                            src={m.attachment}
+                            controls
+                            className="max-w-xs rounded"
+                          />
+                        ) : (
+                          <a
+                            href={m.attachment}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 underline"
+                          >
+                            Скачать файл
+                          </a>
+                        )}
+                      </div>
+                    )}
+
                     {/* Основной текст сообщения с оборачиванием */}
                     {isEditing ? (
                       <>
@@ -194,6 +238,17 @@ export default function ChatWindow({ chatId }: ChatWindowProps) {
       </div>
       {/* Форма отправки сообщения */}
       <form onSubmit={handleSend} className="flex border-t p-4 bg-white">
+        <AttachmentUploader
+          chatId={chatId}
+          onUploadStart={() => {
+            /* индикатор загрузки */
+          }}
+          onUploadEnd={(url, type) => {
+            setAttachmentUrl(url);
+            setAttachmentType(type);
+          }}
+          onUploadError={(err) => alert(err)}
+        />
         <textarea
           className="flex-1 p-2 border rounded-l focus:outline-none focus:ring focus:border-blue-300 resize-none"
           rows={1}
