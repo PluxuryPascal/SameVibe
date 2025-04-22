@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { CldUploadWidget } from "next-cloudinary";
 import api from "src/shared/lib/axios";
-import { transform } from "next/dist/build/swc/generated-native";
 
 interface SignatureParams {
   signature: string;
@@ -25,12 +24,6 @@ export default function AvatarUploader({
 }) {
   const [preview, setPreview] = useState<string | undefined>(avatarUrl);
   const [signParams, setSignParams] = useState<SignatureParams | null>(null);
-
-  // userId в локалсторедж, как договорились
-  const userId =
-    typeof window !== "undefined"
-      ? localStorage.getItem("currentUserId") || ""
-      : "";
 
   // 1) Запрашиваем подпись у своего бэкенда через api (интерцепторы добавят JWT)
   const prepareUpload = async () => {
@@ -76,29 +69,18 @@ export default function AvatarUploader({
         /* 3) Если подпись есть — рендерим виджет с переданными параметрами */
         <CldUploadWidget
           uploadPreset="samevibe"
-          options={
-            {
-              cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME!,
-              apiKey: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY!,
-              folder: signParams.folder,
-              uploadSignature: signParams.signature,
-              uploadSignatureTimestamp: signParams.timestamp,
-              resourceType: "image",
-              cropping: true,
-              croppingAspectRatio: 1,
-              maxFileSize: 2097152,
-              clientAllowedFormats: ["jpg", "jpeg", "png"],
-              transformation: [
-                {
-                  width: 200,
-                  height: 200,
-                  crop: "thumb",
-                  gravity: "face",
-                  radius: "max",
-                },
-              ],
-            } as any
-          }
+          options={{
+            cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME!,
+            apiKey: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY!,
+            folder: signParams.folder,
+            uploadSignature: signParams.signature,
+            uploadSignatureTimestamp: signParams.timestamp,
+            resourceType: "image",
+            cropping: true,
+            croppingAspectRatio: 1,
+            maxFileSize: 2097152 * 2,
+            clientAllowedFormats: ["jpg", "jpeg", "png"],
+          }}
           onSuccess={(result, { widget }) => {
             const url = result.info.secure_url;
             setPreview(url);
