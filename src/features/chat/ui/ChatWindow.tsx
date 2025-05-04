@@ -73,6 +73,7 @@ export default function ChatWindow({ chatId }: ChatWindowProps) {
   const currentUserId = +localStorage.getItem("currentUserId")!;
   const [attachmentUrl, setAttachmentUrl] = useState<string | null>(null);
   const [attachmentType, setAttachmentType] = useState<string | null>(null);
+  const [resetSignal, setResetSignal] = useState(0);
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,6 +95,7 @@ export default function ChatWindow({ chatId }: ChatWindowProps) {
     setText("");
     setAttachmentUrl(null);
     setAttachmentType(null);
+    setResetSignal((s) => s + 1);
   };
 
   // Группировка сообщений по датам с Today/Yesterday
@@ -240,14 +242,13 @@ export default function ChatWindow({ chatId }: ChatWindowProps) {
       <form onSubmit={handleSend} className="flex border-t p-4 bg-white">
         <AttachmentUploader
           chatId={chatId}
-          onUploadStart={() => {
-            /* индикатор загрузки */
-          }}
+          onUploadStart={() => {}}
           onUploadEnd={(url, type) => {
             setAttachmentUrl(url);
             setAttachmentType(type);
           }}
           onUploadError={(err) => alert(err)}
+          resetSignal={resetSignal}
         />
         <textarea
           className="flex-1 p-2 border rounded-l focus:outline-none focus:ring focus:border-blue-300 resize-none"

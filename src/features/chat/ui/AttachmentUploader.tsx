@@ -1,6 +1,7 @@
 "use client";
-import React, { useState } from "react";
-import { CldUploadWidget } from "next-cloudinary";
+
+import React, { useRef, useState, useEffect, useCallback } from "react";
+import { CldUploadWidget, CldUploadWidgetProps } from "next-cloudinary";
 import { fetchAttachmentSignature, SignatureParams } from "../api/signature";
 
 interface AttachmentUploaderProps {
@@ -8,6 +9,7 @@ interface AttachmentUploaderProps {
   onUploadStart: () => void;
   onUploadEnd: (url: string, resourceType: string) => void;
   onUploadError: (err: string) => void;
+  resetSignal: number;
 }
 
 export default function AttachmentUploader({
@@ -15,64 +17,84 @@ export default function AttachmentUploader({
   onUploadStart,
   onUploadEnd,
   onUploadError,
+  resetSignal,
 }: AttachmentUploaderProps) {
-  const [signParams, setSignParams] = useState<SignatureParams | null>(null);
+  const openRef = useRef<() => void>();
+  const [attached, setAttached] = useState<{
+    url: string;
+    type: string;
+  } | null>(null);
 
-  const prepareUpload = async () => {
-    onUploadStart();
-    try {
-      const params = await fetchAttachmentSignature(chatId);
-      setSignParams(params);
-    } catch {
-      onUploadError("Не удалось получить подпись");
-    }
+  // Reset attached when parent signals
+  useEffect(() => {
+    setAttached(null);
+  }, [resetSignal]);
+
+  // onSuccess handler
+  const handleSuccess: CldUploadWidgetProps["onSuccess"] = (result) => {
+    const info = result.info;
+    setAttached({ url: info.secure_url, type: info.resource_type });
+    onUploadEnd(info.secure_url, info.resource_type);
   };
 
-  // Если подписи нет — показываем кнопку подготовки
-  if (!signParams) {
-    return (
-      <button onClick={prepareUpload} className="px-2 py-1 bg-gray-200 rounded">
-        📎 Прикрепить файл
-      </button>
-    );
-  }
+  // Click “Attach” -> open widget
+  const onAttachClick = () => {
+    onUploadStart();
+    openRef.current?.();
+  };
 
   return (
-    <CldUploadWidget
-      uploadPreset="chat_attachments"
-      options={{
-        cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME!,
-        apiKey: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY!,
-        folder: signParams.folder,
-        uploadSignature: signParams.signature,
-        uploadSignatureTimestamp: signParams.timestamp,
-        resourceType: "auto", // auto позволит загружать image/video/raw :contentReference[oaicite:4]{index=4}
-        clientAllowedFormats: [
-          "jpg",
-          "jpeg",
-          "png",
-          "mp4",
-          "webm",
-          "pdf",
-          "docx",
-        ],
-        maxFileSize: 50_000_000,
-      }}
-      onSuccess={(result) => {
-        const info = result.info;
-        onUploadEnd(info.secure_url, info.resource_type);
-        setSignParams(null);
-      }}
-      onError={() => {
-        onUploadError("Ошибка загрузки");
-        setSignParams(null);
-      }}
-    >
-      {({ open }) => (
-        <button onClick={open} className="px-2 py-1 bg-blue-200 rounded ml-2">
-          Выбрать файл
+    <div className="relative inline-block">
+      {attached ? (
+        <div className="w-10 h-10 flex items-center justify-center bg-green-300 rounded-full mr-2">
+          📎
+        </div>
+      ) : (
+        <button
+          onClick={onAttachClick}
+          className="w-10 h-10 flex items-center justify-center bg-gray-200 rounded mr-2"
+          type="button"
+        >
+          📎
         </button>
       )}
-    </CldUploadWidget>
+
+      {/* Always mounted, captures `open()` immediately on mount */}
+      <CldUploadWidget
+        uploadPreset="chat_attachments"
+        options={{
+          cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME!,
+          apiKey: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY!,
+          resourceType: "auto",
+          clientAllowedFormats: [
+            "jpg",
+            "jpeg",
+            "png",
+            "mp4",
+            "webm",
+            "pdf",
+            "docx",
+          ],
+          maxFileSize: 50_000_000,
+        }}
+        // Called just before upload: fetch your signature
+        prepareUploadParams={async (callback, { file }) => {
+          try {
+            const { signature, timestamp, folder } =
+              await fetchAttachmentSignature(chatId);
+            callback({ signature, timestamp, folder });
+          } catch (err) {
+            onUploadError("Не удалось получить подпись");
+          }
+        }}
+        onSuccess={handleSuccess}
+        onError={() => onUploadError("Ошибка загрузки")}
+      >
+        {({ open }) => {
+          openRef.current = open;
+          return null;
+        }}
+      </CldUploadWidget>
+    </div>
   );
 }
