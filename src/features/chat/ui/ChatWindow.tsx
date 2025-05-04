@@ -3,6 +3,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "src/shared/lib/axios";
 import AttachmentUploader from "./AttachmentUploader";
+import Image from "next/image";
+import { Modal, Button } from "react-bootstrap";
 
 // Интерфейс сообщения
 interface Message {
@@ -18,6 +20,9 @@ interface Message {
 interface ChatWindowProps {
   chatId: number;
 }
+
+const validImageTypes = ["jpg", "jpeg", "png", "gif"];
+const validVideoTypes = ["mp4", "webm", "avi"];
 
 export default function ChatWindow({ chatId }: ChatWindowProps) {
   const qc = useQueryClient();
@@ -51,7 +56,6 @@ export default function ChatWindow({ chatId }: ChatWindowProps) {
     );
     socket.onopen = () => console.log("WS opened");
     socket.onmessage = (evt) => {
-      // При получении сообщения обновляем список через invalidate
       qc.invalidateQueries(["messages", chatId]);
     };
     setWs(socket);
@@ -74,6 +78,18 @@ export default function ChatWindow({ chatId }: ChatWindowProps) {
   const [attachmentUrl, setAttachmentUrl] = useState<string | null>(null);
   const [attachmentType, setAttachmentType] = useState<string | null>(null);
   const [resetSignal, setResetSignal] = useState(0);
+  const [showModal, setShowModal] = useState(false);
+  const [modalImage, setModalImage] = useState<string | null>(null);
+
+  const handleImageClick = (imageUrl: string) => {
+    setModalImage(imageUrl);
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setModalImage(null);
+  };
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
@@ -126,6 +142,48 @@ export default function ChatWindow({ chatId }: ChatWindowProps) {
     groups[label] = groups[label] ? [...groups[label], m] : [m];
   });
 
+  // Функция для отображения вложения
+  const renderAttachment = (attachment: string, attachmentType: string) => {
+    const extension = attachment.split(".").pop()?.toLowerCase();
+
+    if (validImageTypes.includes(extension || "")) {
+      return (
+        <Image
+          src={attachment}
+          alt="attachment"
+          width={500} // Укажите нужную ширину
+          height={300} // Укажите нужную высоту
+          className="rounded cursor-pointer"
+          onClick={() => handleImageClick(attachment)} // Открытие изображения в модальном окне
+        />
+      );
+    }
+
+    if (validVideoTypes.includes(extension || "")) {
+      return (
+        <video src={attachment} controls className="max-w-full h-auto rounded">
+          Ваш браузер не поддерживает видео.
+        </video>
+      );
+    }
+
+    return (
+      <div className="flex items-center">
+        <i className="fas fa-file-alt text-gray-600 mr-2"></i>
+        🗎
+        <a
+          href={attachment}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 underline"
+        >
+          Скачать файл
+        </a>
+        🗎
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-col h-full">
       {/* Блок сообщений с фиксированной высотой и локальной вертикальной прокруткой */}
@@ -142,9 +200,7 @@ export default function ChatWindow({ chatId }: ChatWindowProps) {
               return (
                 <div
                   key={m.id}
-                  className={`flex mb-2 ${
-                    isMe ? "justify-start" : "justify-end"
-                  }`}
+                  className={`flex mb-2 ${isMe ? "justify-start" : "justify-end"}`}
                 >
                   <div
                     className={`p-2 rounded-lg max-w-xs break-words ${
@@ -170,33 +226,10 @@ export default function ChatWindow({ chatId }: ChatWindowProps) {
                         </button>
                       )}
                     </div>
+
                     {/* Вложение (если есть) */}
-                    {m.attachment && (
-                      <div className="mt-2">
-                        {m.attachment_type === "image" ? (
-                          <img
-                            src={m.attachment}
-                            alt="attachment"
-                            className="max-w-xs rounded"
-                          />
-                        ) : m.attachment_type === "video" ? (
-                          <video
-                            src={m.attachment}
-                            controls
-                            className="max-w-xs rounded"
-                          />
-                        ) : (
-                          <a
-                            href={m.attachment}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 underline"
-                          >
-                            Скачать файл
-                          </a>
-                        )}
-                      </div>
-                    )}
+                    {m.attachment &&
+                      renderAttachment(m.attachment, m.attachment_type)}
 
                     {/* Основной текст сообщения с оборачиванием */}
                     {isEditing ? (
@@ -221,6 +254,7 @@ export default function ChatWindow({ chatId }: ChatWindowProps) {
                         {m.text}
                       </div>
                     )}
+
                     {/* Нижняя строка: время отправки и (если редактируется) кнопка редактирования уже выведена */}
                     <div className="flex items-center justify-end mt-1">
                       <div className="text-xs text-gray-500">
@@ -238,6 +272,27 @@ export default function ChatWindow({ chatId }: ChatWindowProps) {
         ))}
         <div ref={bottomRef} />
       </div>
+
+      {/* Модальное окно для изображения */}
+      <Modal
+        show={showModal}
+        onHide={handleCloseModal}
+        size="xl"
+        aria-labelledby="contained-modal-title-vcenter"
+        centered
+      >
+        <Modal.Body className="p-0">
+          {modalImage && (
+            <img src={modalImage} alt="Full screen" className="w-100 h-auto" />
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleCloseModal}>
+            Закрыть
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
       {/* Форма отправки сообщения */}
       <form onSubmit={handleSend} className="flex border-t p-4 bg-white">
         <AttachmentUploader

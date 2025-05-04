@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import Logo from "src/components/ui/Logo";
 import Button from "src/components/ui/Button";
+import "bootstrap/dist/css/bootstrap.min.css";
 
 export default function HomePage() {
   return (
