@@ -49,7 +49,6 @@ export default function ProfileCard() {
       const res = await api.get("/interests/userinterests/", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      // Предполагается, что сервер возвращает объекты с вложенным объектом interest
       return res.data.map((item: any) => item.interest);
     },
   });
@@ -76,17 +75,19 @@ export default function ProfileCard() {
     },
   });
 
-  // Функция для очистки токенов и выхода пользователя
   const handleLogout = () => {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
-    // Перенаправление на страницу логина
     router.push("/auth/login");
   };
 
   if (profileLoading) return <div>Загрузка...</div>;
   if (profileError)
     return <div className="text-red-500">Ошибка загрузки профиля</div>;
+
+  // Функция, которая делает массив названий в строку через запятую
+  const joinNames = (items: NamedItem[]) =>
+    items.map((it) => it.name).join(", ") || "—";
 
   return (
     <div className="max-w-md mx-auto bg-white shadow rounded p-6">
@@ -106,29 +107,17 @@ export default function ProfileCard() {
 
       <div className="mt-4">
         <h3 className="text-xl font-semibold">Интересы:</h3>
-        <ul className="list-disc ml-6">
-          {interests.map((interest) => (
-            <li key={interest.id}>{interest.name}</li>
-          ))}
-        </ul>
+        <p className="mt-1 text-gray-700">{joinNames(interests)}</p>
       </div>
 
       <div className="mt-4">
         <h3 className="text-xl font-semibold">Хобби:</h3>
-        <ul className="list-disc ml-6">
-          {hobbies.map((hobby) => (
-            <li key={hobby.id}>{hobby.name}</li>
-          ))}
-        </ul>
+        <p className="mt-1 text-gray-700">{joinNames(hobbies)}</p>
       </div>
 
       <div className="mt-4">
         <h3 className="text-xl font-semibold">Музыкальные жанры:</h3>
-        <ul className="list-disc ml-6">
-          {musicGenres.map((genre) => (
-            <li key={genre.id}>{genre.name}</li>
-          ))}
-        </ul>
+        <p className="mt-1 text-gray-700">{joinNames(musicGenres)}</p>
       </div>
 
       <div className="mt-6 flex justify-around">
