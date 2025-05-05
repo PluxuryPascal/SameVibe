@@ -51,6 +51,15 @@ export default function AvatarUploader({
           className="rounded-full border-2 object-cover mb-2"
           priority
         />
+      ) : avatarUrl ? (
+        <Image
+          src={avatarUrl}
+          alt="Avatar preview"
+          width={200}
+          height={200}
+          className="rounded-full border-2 object-cover mb-2"
+          priority
+        />
       ) : (
         <div className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center mb-2">
           <span className="text-gray-500">Нет фото</span>

@@ -27,27 +27,19 @@ export default function EditProfilePage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [isAvatarLoading, setIsAvatarLoading] = useState(false);
 
-  // 1. Запрос профиля с обновленной обработкой ошибок
+  // 1. Получаем текущий профиль
   const {
     data: profile,
     isLoading,
     error: profileError,
   } = useQuery<ProfileData>({
     queryKey: ["profile"],
-    queryFn: async () => {
-      try {
-        const response = await api.get("/users/profile/");
-        return response.data;
-      } catch (error) {
-        console.error("Profile fetch error:", error);
-        throw error;
-      }
-    },
+    queryFn: () => api.get("/users/profile/").then((res) => res.data),
     refetchOnWindowFocus: false,
     retry: 1,
   });
 
-  // 2. Состояния формы с валидацией
+  // 2. Локальное состояние формы
   const [formState, setFormState] = useState({
     username: "",
     firstName: "",
@@ -57,28 +49,27 @@ export default function EditProfilePage() {
     gender: "" as "male" | "female" | "",
   });
 
-  // 3. Инициализация формы с защитой от null
+  // 3. Инициализируем из ответа
   useEffect(() => {
-    if (profile) {
-      setFormState({
-        username: profile.user.username || "",
-        firstName: profile.user.first_name || "",
-        lastName: profile.user.last_name || "",
-        email: profile.user.email || "",
-        photoUrl: profile.photo || "",
-        gender:
-          profile.gender === true
-            ? "male"
-            : profile.gender === false
-              ? "female"
-              : "",
-      });
-    }
+    if (!profile) return;
+    setFormState({
+      username: profile.user.username,
+      firstName: profile.user.first_name,
+      lastName: profile.user.last_name,
+      email: profile.user.email,
+      photoUrl: profile.photo,
+      gender:
+        profile.gender === true
+          ? "male"
+          : profile.gender === false
+            ? "female"
+            : "",
+    });
   }, [profile]);
 
-  // 4. Валидации с улучшенной обработкой
+  // 4. Валидация
   const validateForm = () => {
-    const errors = [];
+    const errors: string[] = [];
     if (!/^[A-Za-z0-9]+$/.test(formState.username)) {
       errors.push("Логин — только латиница и цифры");
     }
@@ -88,79 +79,81 @@ export default function EditProfilePage() {
     return errors;
   };
 
-  // 5. Обновленная мутация с обработкой фото
+  // 5. Мутация — формируем payload только с изменениями
   const mutation = useMutation({
     mutationFn: async () => {
-      const payload = {
-        user: {
-          username: formState.username,
-          first_name: formState.firstName,
-          last_name: formState.lastName,
-          email: formState.email,
-        },
-        photo: formState.photoUrl,
-        gender:
-          formState.gender === "male"
-            ? true
-            : formState.gender === "female"
-              ? false
-              : null,
-      };
+      if (!profile) throw new Error("Profile not loaded");
+
+      // Собираем только те поля, которые отличаются от оригинала
+      const userPayload: any = {};
+      if (formState.username !== profile.user.username) {
+        userPayload.username = formState.username;
+      }
+      if (formState.firstName !== profile.user.first_name) {
+        userPayload.first_name = formState.firstName;
+      }
+      if (formState.lastName !== profile.user.last_name) {
+        userPayload.last_name = formState.lastName;
+      }
+      if (formState.email !== profile.user.email) {
+        userPayload.email = formState.email;
+      }
+
+      const payload: any = {};
+      if (Object.keys(userPayload).length) {
+        payload.user = userPayload;
+      }
+      if (formState.photoUrl !== profile.photo) {
+        payload.photo = formState.photoUrl;
+      }
+      const genderVal =
+        formState.gender === "male"
+          ? true
+          : formState.gender === "female"
+            ? false
+            : null;
+      if (genderVal !== profile.gender) {
+        payload.gender = genderVal;
+      }
 
       return api.patch("/users/profile/", payload);
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["profile"] });
+      qc.invalidateQueries(["profile"]);
       setSaveMessage("Изменения сохранены");
       setTimeout(() => router.push("/profile"), 2000);
     },
-    onError: (error: any) => {
-      const errorData = error.response?.data;
-      const errorMessage =
-        errorData?.detail ||
-        errorData?.user?.username?.join?.(" ") ||
+    onError: (err: any) => {
+      const errData = err.response?.data;
+      const msg =
+        errData?.detail ||
+        errData?.user?.username?.join(" ") ||
         "Ошибка при сохранении профиля";
-      setErrorMessage(errorMessage);
+      setErrorMessage(msg);
     },
   });
 
-  // 6. Обработчик отправки формы
   const handleSubmit = () => {
-    const errors = validateForm();
-    if (errors.length > 0) {
-      setErrorMessage(errors.join("\n"));
+    const errs = validateForm();
+    if (errs.length) {
+      setErrorMessage(errs.join("\n"));
       return;
     }
-
     if (isAvatarLoading) {
       setErrorMessage("Дождитесь завершения загрузки аватара");
       return;
     }
-
     setErrorMessage("");
     mutation.mutate();
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        Загрузка профиля...
-      </div>
-    );
-  }
-
-  if (profileError) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-red-500">
-        Ошибка загрузки профиля
-      </div>
-    );
-  }
+  if (isLoading) return <div>Загрузка...</div>;
+  if (profileError)
+    return <div className="text-red-500">Ошибка загрузки профиля</div>;
 
   return (
     <div className="min-h-screen bg-gray-100">
       <Header />
-
       {/* Уведомления */}
       <div className="fixed top-20 right-4 space-y-2">
         {saveMessage && (
@@ -175,8 +168,8 @@ export default function EditProfilePage() {
         )}
       </div>
 
-      {/* Основная форма */}
-      <div className="max-w-4xl mx-auto bg-white p-8 m-10 rounded shadow">
+      {/* Форма */}
+      <div className="max-w-4xl mx-auto bg-white p-8 my-10 rounded shadow">
         <h1 className="text-3xl font-bold mb-6 text-center">
           Редактировать профиль
         </h1>
@@ -185,73 +178,57 @@ export default function EditProfilePage() {
           avatarUrl={formState.photoUrl}
           onUploadStart={() => setIsAvatarLoading(true)}
           onUploadEnd={(url) => {
-            setFormState((prev) => ({ ...prev, photoUrl: url }));
+            setFormState((p) => ({ ...p, photoUrl: url }));
             setIsAvatarLoading(false);
           }}
-          onUploadError={(error) => {
+          onUploadError={(err) => {
             setIsAvatarLoading(false);
-            setErrorMessage(`Ошибка загрузки аватара: ${error}`);
+            setErrorMessage(`Ошибка загрузки аватара: ${err}`);
           }}
         />
 
-        {/* Поля формы */}
-        <div className="space-y-4">
+        <div className="space-y-4 mt-6">
           <InputField
             label="Логин"
             value={formState.username}
             onChange={(e) =>
-              setFormState((prev) => ({
-                ...prev,
-                username: e.target.value,
-              }))
+              setFormState((p) => ({ ...p, username: e.target.value }))
             }
           />
-
           <InputField
             label="Имя"
             value={formState.firstName}
             onChange={(e) =>
-              setFormState((prev) => ({
-                ...prev,
-                firstName: e.target.value,
-              }))
+              setFormState((p) => ({ ...p, firstName: e.target.value }))
             }
           />
-
           <InputField
             label="Фамилия"
             value={formState.lastName}
             onChange={(e) =>
-              setFormState((prev) => ({
-                ...prev,
-                lastName: e.target.value,
-              }))
+              setFormState((p) => ({ ...p, lastName: e.target.value }))
             }
           />
-
           <InputField
             label="Email"
             type="email"
             value={formState.email}
             onChange={(e) =>
-              setFormState((prev) => ({
-                ...prev,
-                email: e.target.value,
-              }))
+              setFormState((p) => ({ ...p, email: e.target.value }))
             }
           />
 
           <div className="mb-4">
             <label className="block mb-1 font-medium">Пол</label>
             <select
+              className="w-full p-2 border rounded"
               value={formState.gender}
               onChange={(e) =>
-                setFormState((prev) => ({
-                  ...prev,
-                  gender: e.target.value as typeof formState.gender,
+                setFormState((p) => ({
+                  ...p,
+                  gender: e.target.value as any,
                 }))
               }
-              className="w-full p-2 border rounded"
             >
               <option value="">Не выбран</option>
               <option value="male">Мужской</option>
@@ -260,28 +237,7 @@ export default function EditProfilePage() {
           </div>
         </div>
 
-        {/* Ссылки */}
-        <div className="flex flex-wrap gap-4 mb-6">
-          {["interests", "hobbies", "music"].map((type) => (
-            <a
-              key={type}
-              href={`/choose/${type}?origin=profile/edit`}
-              className="text-blue-500 hover:underline"
-            >
-              Изменить{" "}
-              {
-                {
-                  interests: "интересы",
-                  hobbies: "хобби",
-                  music: "музыкальные вкусы",
-                }[type]
-              }
-            </a>
-          ))}
-        </div>
-
-        {/* Кнопка отправки */}
-        <div className="flex justify-end">
+        <div className="flex justify-end mt-6">
           <Button
             onClick={handleSubmit}
             disabled={mutation.isPending || isAvatarLoading}
