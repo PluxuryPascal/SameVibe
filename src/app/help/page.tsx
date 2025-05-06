@@ -7,19 +7,13 @@ import DeveloperSection from "src/features/help/ui/DeveloperSection";
 export default function HelpPage() {
   const faqs = [
     {
-      question: "Как восстановить пароль?",
-      answer:
-        "Для восстановления пароля воспользуйтесь ссылкой 'Забыли пароль?' на странице входа.",
-    },
-    {
       question: "Как изменить профиль?",
       answer:
         "Перейдите в раздел 'Профиль' и нажмите 'Редактировать профиль', чтобы внести изменения.",
     },
     {
       question: "Как связаться со службой поддержки?",
-      answer:
-        "Вы можете отправить письмо на support@samevibe.com или воспользоваться формой обратной связи в приложении.",
+      answer: "Вы можете отправить письмо на samevivesup@gmail.com",
     },
   ];
 
