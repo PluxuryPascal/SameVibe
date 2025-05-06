@@ -17,7 +17,7 @@ export default function LoginPage() {
 
   type LoginVars = { username: string; password: string };
 
-  // Функция проверки предпочтений пользователя (осталась без изменений)
+  // Доп. запрос для получения userId
   const checkUserPreferences = async () => {
     const interestsPromise = api.get("/interests/userinterests/");
     const hobbiesPromise = api.get("/interests/userhobbies/");
@@ -41,22 +41,21 @@ export default function LoginPage() {
         return response.data;
       },
       onSuccess: async (data) => {
-        // Сохраняем токены
         localStorage.setItem("accessToken", data.access);
         localStorage.setItem("refreshToken", data.refresh);
 
-        // Дополнительный запрос для получения id пользователя
+        // Получаем и сохраняем userId
         try {
           const res = await api.get("/users/userid/", {
             headers: { Authorization: `Bearer ${data.access}` },
           });
-          // Предполагается, что сервер возвращает число или объект { id: ... }
           const userId = typeof res.data === "object" ? res.data.id : res.data;
           localStorage.setItem("currentUserId", userId.toString());
         } catch (err) {
           console.error("Ошибка получения id пользователя", err);
         }
 
+        // Роутинг в зависимости от заполненности профиля
         try {
           const { interests, hobbies, musics } = await checkUserPreferences();
           if (
@@ -68,12 +67,11 @@ export default function LoginPage() {
           } else {
             router.push("/chats/");
           }
-        } catch (error) {
+        } catch {
           router.push("/choose/interests?origin=auth");
         }
       },
-      onError: (error: Error) => {
-        console.error(error);
+      onError: () => {
         setErrorMessage("Неверный логин или пароль");
       },
     });
@@ -98,7 +96,7 @@ export default function LoginPage() {
             {errorMessage && (
               <p className="mb-4 text-red-500 text-center">{errorMessage}</p>
             )}
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} className="space-y-4">
               <InputField
                 label="Логин"
                 type="text"
@@ -117,9 +115,12 @@ export default function LoginPage() {
                 {loginMutation.isPending ? "Вход..." : "Войти"}
               </Button>
             </form>
-            <p className="mt-4 text-center">
+            <p className="mt-2 text-center">
               Нет аккаунта?{" "}
-              <Link href="/auth/register" className="text-blue-500">
+              <Link
+                href="/auth/register"
+                className="text-blue-500 hover:underline"
+              >
                 Зарегистрироваться
               </Link>
             </p>
