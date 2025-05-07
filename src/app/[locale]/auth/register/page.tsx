@@ -8,6 +8,7 @@ import InputField from "src/components/ui/InputField";
 import Button from "src/components/ui/Button";
 import Link from "next/link";
 import Checkbox from "src/components/ui/CheckBox";
+import { useTranslations } from "next-intl";
 
 type RegisterPayload = {
   user: {
@@ -39,6 +40,7 @@ export default function RegisterPage() {
   }>({});
   const [serverError, setServerError] = useState("");
   const router = useRouter();
+  const t = useTranslations("");
 
   // Мутация
   const registerMutation = useMutation<any, any, RegisterPayload>({
@@ -49,9 +51,11 @@ export default function RegisterPage() {
     onError: (err) => {
       const data = err.response?.data;
       if (data?.user?.username?.length) {
-        setServerError("Пользователь с таким логином уже существует");
+        setServerError(t("auth_register_error_user_exists"));
       } else {
-        setServerError(err.response?.data?.detail || "Ошибка при регистрации");
+        setServerError(
+          err.response?.data?.detail || t("auth_register_error_generic"),
+        );
       }
     },
   });
@@ -59,15 +63,15 @@ export default function RegisterPage() {
   // Валидация полей
   useEffect(() => {
     const errs: typeof fieldErrors = {};
-    if (!username) errs.username = "Логин обязателен";
+    if (!username) errs.username = t("auth_register_error_login_required");
     else if (!/^[A-Za-z0-9]+$/.test(username))
-      errs.username = "Логин может содержать только латиницу и цифры";
+      errs.username = t("auth_register_error_login_format");
 
-    if (!name) errs.name = "Имя обязательно";
-    if (!surname) errs.surname = "Фамилия обязательна";
-    if (!email) errs.email = "Email обязателен";
-    if (!password) errs.password = "Пароль обязателен";
-    if (!gender) errs.gender = "Пол обязателен";
+    if (!name) errs.name = t("auth_register_error_name_required");
+    if (!surname) errs.surname = t("auth_register_error_surname_required");
+    if (!email) errs.email = t("auth_register_error_email_required");
+    if (!password) errs.password = t("auth_register_error_password_required");
+    if (!gender) errs.gender = t("auth_register_error_gender_required");
 
     setFieldErrors(errs);
   }, [username, name, surname, email, password, gender]);
@@ -99,7 +103,9 @@ export default function RegisterPage() {
         </div>
         <div className="flex items-center justify-center">
           <div className="w-full max-w-md bg-white p-8 rounded shadow">
-            <h2 className="text-2xl font-bold text-center mb-6">Регистрация</h2>
+            <h2 className="text-2xl font-bold text-center mb-6">
+              {t("auth_register_title")}
+            </h2>
 
             {serverError && (
               <p className="mb-4 text-red-500 text-center">{serverError}</p>
@@ -107,62 +113,64 @@ export default function RegisterPage() {
 
             <form onSubmit={handleSubmit} noValidate>
               <InputField
-                label="Логин"
+                label={t("auth_register_username")}
                 type="text"
-                placeholder="Введите логин"
+                placeholder={t("auth_register_username_placeholder")}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 error={fieldErrors.username}
               />
 
               <InputField
-                label="Имя"
+                label={t("auth_register_name")}
                 type="text"
-                placeholder="Введите имя"
+                placeholder={t("auth_register_name_placeholder")}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 error={fieldErrors.name}
               />
 
               <InputField
-                label="Фамилия"
+                label={t("auth_register_surname")}
                 type="text"
-                placeholder="Введите фамилию"
+                placeholder={t("auth_register_surname_placeholder")}
                 value={surname}
                 onChange={(e) => setSurname(e.target.value)}
                 error={fieldErrors.surname}
               />
 
               <InputField
-                label="Email"
+                label={t("auth_register_email")}
                 type="email"
-                placeholder="Введите email"
+                placeholder={t("auth_register_email_placeholder")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 error={fieldErrors.email}
               />
 
               <InputField
-                label="Пароль"
+                label={t("auth_register_password")}
                 type="password"
-                placeholder="Введите пароль"
+                placeholder={t("auth_register_password_placeholder")}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 error={fieldErrors.password}
               />
 
               <div className="mt-4">
-                <label className="block mb-1 font-medium">Пол</label>
+                <label className="block mb-1 font-medium">
+                  {t("auth_register_gender")}
+                </label>
                 <div className="flex space-x-4 justify-center">
                   <Checkbox
-                    label="Мужской"
+                    label={t("auth_register_gender_male")}
                     checked={gender === "male"}
                     onChange={() =>
                       setGender(gender === "male" ? undefined : "male")
                     }
                   />
                   <Checkbox
-                    label="Женский"
+                    label={t("auth_register_gender_female")}
                     checked={gender === "female"}
                     onChange={() =>
                       setGender(gender === "female" ? undefined : "female")
@@ -185,15 +193,15 @@ export default function RegisterPage() {
                 }
               >
                 {registerMutation.isPending
-                  ? "Регистрация..."
-                  : "Зарегистрироваться"}
+                  ? t("auth_register_pending")
+                  : t("auth_register_button")}
               </Button>
             </form>
 
             <p className="mt-4 text-center">
-              Уже есть аккаунт?{" "}
+              {t("auth_register_have_account")}{" "}
               <Link href="/auth/login" className="text-blue-500">
-                Войти
+                {t("auth_register_go_login")}
               </Link>
             </p>
           </div>

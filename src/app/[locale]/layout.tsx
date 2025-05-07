@@ -5,6 +5,11 @@ import BackgroundAnimation from "src/components/BackgroundAnimation";
 import Providers from "src/components/Provider";
 import "bootstrap/dist/css/bootstrap.min.css";
 
+import { NextIntlClientProvider } from "next-intl";
+import { notFound } from "next/navigation";
+import { routing } from "@/i18n/routing";
+import { hasLocale } from "next-intl";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -20,19 +25,30 @@ export const metadata: Metadata = {
   description: "test",
 };
 
-export default function RootLayout({
+export const generateStaticParams = () => {
+  return ["en", "ru", "es", "de"].map((locale) => ({ locale }));
+};
+
+export default async function LocaleLayout({
   children,
+  params,
 }: {
   children: React.ReactNode;
+  params: Promise<{ locale: string }>;
 }) {
+  // Ensure that the incoming `locale` is valid
+  const { locale } = await params;
+  if (!hasLocale(routing.locales, locale)) {
+    notFound();
+  }
   return (
-    <html lang="en">
+    <html lang={"en"}>
       <Providers>
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
           <BackgroundAnimation />
-          {children}
+          <NextIntlClientProvider>{children}</NextIntlClientProvider>
         </body>
       </Providers>
     </html>

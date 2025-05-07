@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, UseMutationResult } from "@tanstack/react-query";
@@ -14,6 +16,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const router = useRouter();
+  const t = useTranslations("");
 
   type LoginVars = { username: string; password: string };
 
@@ -91,37 +94,37 @@ export default function LoginPage() {
         <div className="flex items-center justify-center">
           <div className="w-full max-w-md bg-white p-8 rounded shadow">
             <div className="mb-6 text-center">
-              <h2 className="text-2xl font-bold mt-4">Вход</h2>
+              <h2 className="text-2xl font-bold mt-4">{t("home_login")}</h2>
             </div>
             {errorMessage && (
               <p className="mb-4 text-red-500 text-center">{errorMessage}</p>
             )}
             <form onSubmit={handleSubmit} className="space-y-4">
               <InputField
-                label="Логин"
+                label={t("auth_login_username")}
                 type="text"
-                placeholder="Введите логин"
+                placeholder={t("auth_login_username_placeholder")}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
               />
               <InputField
-                label="Пароль"
+                label={t("auth_login_password")}
                 type="password"
-                placeholder="Введите пароль"
+                placeholder={t("auth_login_password_placeholder")}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
               <Button type="submit" disabled={loginMutation.isPending}>
-                {loginMutation.isPending ? "Вход..." : "Войти"}
+                {loginMutation.isPending ? "Вход..." : t("auth_login_button")}
               </Button>
             </form>
             <p className="mt-2 text-center">
-              Нет аккаунта?{" "}
+              {t("auth_login_no_account")}{" "}
               <Link
                 href="/auth/register"
                 className="text-blue-500 hover:underline"
               >
-                Зарегистрироваться
+                {t("auth_login_go_register")}
               </Link>
             </p>
           </div>

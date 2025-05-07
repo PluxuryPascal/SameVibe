@@ -1,13 +1,19 @@
+"use client";
+
 import React, { useState } from "react";
+import { useRouter } from "src/i18n/navigation";
 import Button from "src/components/ui/Button";
 
 export default function SettingsForm() {
+  const router = useRouter();
   const [language, setLanguage] = useState("ru");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Здесь можно подключить бизнес-логику для сохранения выбранного языка
     console.log("Настройки сохранены:", { language });
+
+    // router.push автоматически учитывает текущий pathname и locale
+    router.push("/settings", { locale: language });
   };
 
   return (
