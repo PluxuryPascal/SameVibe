@@ -8,6 +8,7 @@ import Header from "src/components/layout/Header";
 import AvatarUploader from "src/features/profile/ui/AvatarUploader";
 import InputField from "src/components/ui/InputField";
 import Button from "src/components/ui/Button";
+import { useTranslations } from "next-intl";
 
 interface ProfileData {
   user: {
@@ -26,6 +27,7 @@ export default function EditProfilePage() {
   const [saveMessage, setSaveMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isAvatarLoading, setIsAvatarLoading] = useState(false);
+  const t = useTranslations("");
 
   // 1. Получаем текущий профиль
   const {
@@ -120,7 +122,7 @@ export default function EditProfilePage() {
     },
     onSuccess: () => {
       qc.invalidateQueries(["profile"]);
-      setSaveMessage("Изменения сохранены");
+      setSaveMessage(t("profile_edit_saved"));
       setTimeout(() => router.push("/profile"), 2000);
     },
     onError: (err: any) => {
@@ -171,7 +173,7 @@ export default function EditProfilePage() {
       {/* Форма */}
       <div className="max-w-4xl mx-auto bg-white p-8 my-10 rounded shadow">
         <h1 className="text-3xl font-bold mb-6 text-center">
-          Редактировать профиль
+          {t("profile_edit_title")}
         </h1>
 
         <AvatarUploader
@@ -189,28 +191,28 @@ export default function EditProfilePage() {
 
         <div className="space-y-4 mt-6">
           <InputField
-            label="Логин"
+            label={t("auth_register_username")}
             value={formState.username}
             onChange={(e) =>
               setFormState((p) => ({ ...p, username: e.target.value }))
             }
           />
           <InputField
-            label="Имя"
+            label={t("auth_register_name")}
             value={formState.firstName}
             onChange={(e) =>
               setFormState((p) => ({ ...p, firstName: e.target.value }))
             }
           />
           <InputField
-            label="Фамилия"
+            label={t("auth_register_surname")}
             value={formState.lastName}
             onChange={(e) =>
               setFormState((p) => ({ ...p, lastName: e.target.value }))
             }
           />
           <InputField
-            label="Email"
+            label={t("auth_register_email")}
             type="email"
             value={formState.email}
             onChange={(e) =>
@@ -219,7 +221,9 @@ export default function EditProfilePage() {
           />
 
           <div className="mb-4">
-            <label className="block mb-1 font-medium">Пол</label>
+            <label className="block mb-1 font-medium">
+              {t("profile_edit_gender_label")}
+            </label>
             <select
               className="w-full p-2 border rounded"
               value={formState.gender}
@@ -230,9 +234,9 @@ export default function EditProfilePage() {
                 }))
               }
             >
-              <option value="">Не выбран</option>
-              <option value="male">Мужской</option>
-              <option value="female">Женский</option>
+              <option value="">{t("profile_edit_gender_none")}</option>
+              <option value="male">{t("profile_edit_gender_male")}</option>
+              <option value="female">{t("profile_edit_gender_female")}</option>
             </select>
           </div>
         </div>
@@ -242,7 +246,9 @@ export default function EditProfilePage() {
             onClick={handleSubmit}
             disabled={mutation.isPending || isAvatarLoading}
           >
-            {mutation.isPending ? "Сохранение..." : "Сохранить изменения"}
+            {mutation.isPending
+              ? t("profile_edit_button_saving")
+              : t("profile_edit_button_save")}
           </Button>
         </div>
       </div>

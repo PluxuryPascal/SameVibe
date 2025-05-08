@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import React from "react";
 
 export type FriendsTab = "received" | "sended" | "accepted";
@@ -10,10 +11,12 @@ interface FriendsTabsProps {
 }
 
 export default function FriendsTabs({ current, onChange }: FriendsTabsProps) {
+  const t = useTranslations("");
+
   const tabs: { key: FriendsTab; label: string }[] = [
-    { key: "received", label: "Входящие заявки" },
-    { key: "sended", label: "Исходящие заявки" },
-    { key: "accepted", label: "Друзья" },
+    { key: "received", label: t("friends_tab_received") },
+    { key: "sended", label: t("friends_tab_sended") },
+    { key: "accepted", label: t("friends_tab_accepted") },
   ];
 
   return (

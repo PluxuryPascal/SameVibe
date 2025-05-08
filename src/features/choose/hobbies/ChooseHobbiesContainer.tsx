@@ -6,6 +6,7 @@ import api from "src/shared/lib/axios";
 import Button from "src/components/ui/Button";
 import SelectionGrid, { SelectionItem } from "src/components/ui/SelectionGrid";
 import SelectionContainer from "src/components/ui/SelectionContainer";
+import { useTranslations } from "next-intl";
 
 export default function ChooseHobbiesContainer() {
   // Храним выбранные хобби как массив числовых id
@@ -13,6 +14,7 @@ export default function ChooseHobbiesContainer() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const origin = searchParams.get("origin") || "auth";
+  const t = useTranslations("");
 
   const continueLink =
     origin === "auth"
@@ -84,7 +86,7 @@ export default function ChooseHobbiesContainer() {
   return (
     <div className="flex flex-col items-center justify-center space-y-6">
       <div className="mb-6 text-center">
-        <h2 className="text-2xl font-bold">Выберите ваши хобби</h2>
+        <h2 className="text-2xl font-bold">{t("choose_hobbies_title")}</h2>
       </div>
       <SelectionContainer>
         <SelectionGrid
@@ -101,7 +103,7 @@ export default function ChooseHobbiesContainer() {
             selectedHobbies.length < 2 ? "opacity-50 cursor-not-allowed" : ""
           }
         >
-          Продолжить
+          {t("choose_continue")}
         </Button>
       </div>
     </div>

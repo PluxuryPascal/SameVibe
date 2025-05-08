@@ -6,12 +6,14 @@ import api from "src/shared/lib/axios";
 import Button from "src/components/ui/Button";
 import SelectionGrid, { SelectionItem } from "src/components/ui/SelectionGrid";
 import SelectionContainer from "src/components/ui/SelectionContainer";
+import { useTranslations } from "next-intl";
 
 export default function ChooseMusicContainer() {
   const [selectedMusic, setSelectedMusic] = useState<number[]>([]);
   const router = useRouter();
   const searchParams = useSearchParams();
   const origin = searchParams.get("origin") || "auth";
+  const t = useTranslations("");
 
   const continueLink =
     origin === "auth" ? `/chats?origin=auth` : `/profile/edit?origin=profile`;
@@ -80,7 +82,7 @@ export default function ChooseMusicContainer() {
   return (
     <div className="flex flex-col items-center justify-center space-y-6">
       <div className="mb-6 text-center">
-        <h2 className="text-2xl font-bold">Выберите ваш музыкальный вкус</h2>
+        <h2 className="text-2xl font-bold">{t("choose_music_title")}</h2>
       </div>
       <SelectionContainer>
         <SelectionGrid
@@ -97,7 +99,7 @@ export default function ChooseMusicContainer() {
             selectedMusic.length === 0 ? "opacity-50 cursor-not-allowed" : ""
           }
         >
-          Продолжить
+          {t("choose_continue")}
         </Button>
       </div>
     </div>

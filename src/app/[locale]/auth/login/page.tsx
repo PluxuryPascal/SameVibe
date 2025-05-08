@@ -115,7 +115,9 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
               />
               <Button type="submit" disabled={loginMutation.isPending}>
-                {loginMutation.isPending ? "Вход..." : t("auth_login_button")}
+                {loginMutation.isPending
+                  ? t("auth_login_pending")
+                  : t("auth_login_button")}
               </Button>
             </form>
             <p className="mt-2 text-center">

@@ -3,10 +3,12 @@ import React from "react";
 import Link from "next/link";
 import Logo from "src/components/ui/Logo";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 export default function Header() {
   const pathname = usePathname();
   const isActive = (href: string) => pathname.startsWith(href);
+  const t = useTranslations("");
 
   return (
     <header className="flex items-center justify-between bg-white shadow p-4">
@@ -21,7 +23,7 @@ export default function Header() {
               : "text-blue-500"
           }`}
         >
-          Профиль
+          {t("header_profile")}
         </Link>
         <Link
           href="/friends"
@@ -31,7 +33,7 @@ export default function Header() {
               : "text-blue-500"
           }`}
         >
-          Друзья
+          {t("header_friends")}
         </Link>
         <Link
           href="/chats"
@@ -41,7 +43,7 @@ export default function Header() {
               : "text-blue-500"
           }`}
         >
-          Чаты
+          {t("header_chats")}
         </Link>
         <Link
           href="/search"
@@ -51,7 +53,7 @@ export default function Header() {
               : "text-blue-500"
           }`}
         >
-          Поиск
+          {t("header_search")}
         </Link>
       </nav>
 
@@ -66,7 +68,7 @@ export default function Header() {
                 : "text-gray-500"
             }`}
           >
-            Настройки
+            {t("header_settings")}
           </Link>
         </div>
         <div>
@@ -78,7 +80,7 @@ export default function Header() {
                 : "text-gray-500"
             }`}
           >
-            Помощь
+            {t("header_help")}
           </Link>
         </div>
       </div>

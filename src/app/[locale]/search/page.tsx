@@ -10,6 +10,7 @@ import SearchResultCard from "src/features/search/ui/SearchResultCard";
 import SearchFilterTabs, {
   SearchCategory,
 } from "src/features/search/ui/SearchFilterTabs";
+import { useTranslations } from "next-intl";
 
 type UserData = {
   id: number;
@@ -35,6 +36,7 @@ export default function SearchPage() {
     music: "music-search",
   };
   const endpoint = endpointMap[currentCategory];
+  const t = useTranslations("");
 
   // GET один раз при смене категории
   const { data = [], isLoading } = useQuery<UserData[]>({
@@ -121,13 +123,16 @@ export default function SearchPage() {
     },
   });
 
-  if (isLoading) return <div className="p-10 text-center">Загрузка...</div>;
+  if (isLoading)
+    return <div className="p-10 text-center">{t("chats_loading")}</div>;
 
   return (
     <div className="min-h-screen bg-gray-100 relative">
       <Header />
       <div className="max-w-2xl mx-auto py-10 px-4">
-        <h2 className="text-3xl font-bold mb-4 text-center">Поиск людей</h2>
+        <h2 className="text-3xl font-bold mb-4 text-center">
+          {t("search_title")}
+        </h2>
 
         <SearchFilterTabs
           currentCategory={currentCategory}
@@ -137,9 +142,9 @@ export default function SearchPage() {
           {/* Поиск */}
           <div>
             <InputField
-              label="Найти пользователя"
+              label={t("search_label")}
               type="text"
-              placeholder="Введите имя или фамилию"
+              placeholder={t("search_placeholder")}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
@@ -152,9 +157,9 @@ export default function SearchPage() {
               value={genderFilter}
               onChange={(e) => setGenderFilter(e.target.value as any)}
             >
-              <option value="">Пол: все</option>
-              <option value="male">Пол: мужской</option>
-              <option value="female">Пол: женский</option>
+              <option value="">{t("search_filter_gender_all")}</option>
+              <option value="male">{t("search_filter_gender_male")}</option>
+              <option value="female">{t("search_filter_gender_female")}</option>
             </select>
           </div>
         </div>
@@ -165,7 +170,7 @@ export default function SearchPage() {
             <SearchResultCard
               key={u.id}
               name={`${u.first_name} ${u.last_name}`}
-              description={`Совместимость: ${u.percentage}%`}
+              description={`${t("search_description")} ${u.percentage}%`}
               avatar={u.avatar || undefined}
               status={u.status}
               onAddFriend={() => addMut.mutate(u.id)}

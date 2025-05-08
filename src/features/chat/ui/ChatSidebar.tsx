@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "src/shared/lib/axios";
 import ChatCard from "./ChatCard";
 import { useWebSocket } from "src/shared/lib/useWebSocket";
+import { useTranslations } from "next-intl";
 
 export interface ChatInfo {
   id: number;
@@ -28,6 +29,7 @@ export default function ChatSidebar({
   onSelect,
 }: ChatSidebarProps) {
   const qc = useQueryClient();
+  const t = useTranslations("");
 
   // Загрузка текущего userId из localStorage
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
@@ -69,7 +71,7 @@ export default function ChatSidebar({
 
   // Если currentUserId ещё не загружен, показываем индикатор загрузки
   if (currentUserId === null) {
-    return <div className="p-4 text-center">Загрузка...</div>;
+    return <div className="p-4 text-center">{t("chats_loading")}</div>;
   }
 
   return (
@@ -79,7 +81,7 @@ export default function ChatSidebar({
     >
       <input
         type="text"
-        placeholder="Поиск чатов..."
+        placeholder={t("chat_search_placeholder")}
         className="mb-4 p-2 border rounded"
         value={search}
         onChange={(e) => setSearch(e.target.value)}

@@ -1,5 +1,6 @@
 import React from "react";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 
 export interface FriendCardProps {
   name: string;
@@ -34,6 +35,8 @@ export default function FriendCard({
   onRejectOrCancel,
   onWrite,
 }: FriendCardProps) {
+  const t = useTranslations("");
+
   return (
     <div className="flex items-center p-4 bg-white rounded shadow mb-4">
       <div className="relative w-16 h-16">
@@ -63,13 +66,13 @@ export default function FriendCard({
               onClick={onAccept}
               className="text-blue-500 hover:underline"
             >
-              Принять
+              {t("friends_button_accept")}
             </button>
             <button
               onClick={onRejectOrCancel}
               className="text-red-500 hover:underline"
             >
-              Отклонить
+              {t("friends_button_reject")}
             </button>
           </>
         )}
@@ -78,19 +81,19 @@ export default function FriendCard({
             onClick={onRejectOrCancel}
             className="text-red-500 hover:underline"
           >
-            Отменить заявку
+            {t("friends_button_cancel")}
           </button>
         )}
         {friendshipType === "accepted" && (
           <>
             <button onClick={onWrite} className="text-blue-500 hover:underline">
-              Написать
+              {t("friends_button_write")}
             </button>
             <button
               onClick={onRejectOrCancel}
               className="text-red-500 hover:underline"
             >
-              Удалить из друзей
+              {t("friends_button_remove")}
             </button>
           </>
         )}

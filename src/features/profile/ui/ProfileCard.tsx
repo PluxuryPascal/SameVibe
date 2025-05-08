@@ -7,6 +7,7 @@ import Image from "next/image";
 import Button from "@/components/ui/Button";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 interface ProfileData {
   user: {
@@ -26,6 +27,7 @@ interface NamedItem {
 
 export default function ProfileCard() {
   const router = useRouter();
+  const t = useTranslations("");
 
   const {
     data: profile,
@@ -106,28 +108,28 @@ export default function ProfileCard() {
       </div>
 
       <div className="mt-4">
-        <h3 className="text-xl font-semibold">Интересы:</h3>
+        <h3 className="text-xl font-semibold">{t("profile_interests")}</h3>
         <p className="mt-1 text-gray-700">{joinNames(interests)}</p>
       </div>
 
       <div className="mt-4">
-        <h3 className="text-xl font-semibold">Хобби:</h3>
+        <h3 className="text-xl font-semibold">{t("profile_hobbies")}</h3>
         <p className="mt-1 text-gray-700">{joinNames(hobbies)}</p>
       </div>
 
       <div className="mt-4">
-        <h3 className="text-xl font-semibold">Музыкальные жанры:</h3>
+        <h3 className="text-xl font-semibold">{t("profile_musics")}</h3>
         <p className="mt-1 text-gray-700">{joinNames(musicGenres)}</p>
       </div>
 
       <div className="mt-6 flex justify-around">
         <Link href="/profile/edit">
-          <Button>Редактировать профиль</Button>
+          <Button>{t("profile_edit_button")}</Button>
         </Link>
       </div>
       <div className="mt-2 flex justify-around">
         <Button className="bg-red-500 hover:bg-red-600" onClick={handleLogout}>
-          Выйти
+          {t("profile_logout")}
         </Button>
       </div>
     </div>

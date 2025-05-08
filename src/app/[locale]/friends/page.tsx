@@ -7,6 +7,7 @@ import api from "src/shared/lib/axios";
 import Header from "src/components/layout/Header";
 import FriendsTabs, { FriendsTab } from "src/features/friends/ui/FriendsTabs";
 import FriendCard from "src/features/friends/ui/FriendCard";
+import { useTranslations } from "next-intl";
 
 interface FriendInfo {
   first_name: string;
@@ -28,6 +29,7 @@ export default function FriendsPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [currentTab, setCurrentTab] = useState<FriendsTab>("accepted");
+  const t = useTranslations("");
 
   // Получаем список дружбы для текущего пользователя по выбранной вкладке
   const {
@@ -110,14 +112,16 @@ export default function FriendsPage() {
     <div className="min-h-screen bg-gray-100">
       <Header />
       <div className="max-w-2xl mx-auto py-10 px-4">
-        <h2 className="text-3xl font-bold mb-6 text-center">Друзья</h2>
+        <h2 className="text-3xl font-bold mb-6 text-center">
+          {t("friends_title")}
+        </h2>
         <FriendsTabs current={currentTab} onChange={setCurrentTab} />
         <div className="bg-white p-4 rounded-b-xl shadow">
           {data.length === 0 ? (
             <div className="text-center py-6 font-bold">
-              {currentTab === "received" && "Входящих заявок нет"}
-              {currentTab === "sended" && "Исходящих заявок нет"}
-              {currentTab === "accepted" && "Друзей нет"}
+              {currentTab === "received" && t("friends_empty_received")}
+              {currentTab === "sended" && t("friends_empty_sended")}
+              {currentTab === "accepted" && t("friends_empty_accepted")}
             </div>
           ) : (
             data.map((fs, i) => {

@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { CldUploadWidget } from "next-cloudinary";
 import api from "src/shared/lib/axios";
+import { useTranslations } from "next-intl";
 
 interface SignatureParams {
   signature: string;
@@ -24,6 +25,7 @@ export default function AvatarUploader({
 }) {
   const [preview, setPreview] = useState<string | undefined>(avatarUrl);
   const [signParams, setSignParams] = useState<SignatureParams | null>(null);
+  const t = useTranslations("");
 
   // 1) Запрашиваем подпись у своего бэкенда через api (интерцепторы добавят JWT)
   const prepareUpload = async () => {
@@ -72,7 +74,7 @@ export default function AvatarUploader({
           onClick={prepareUpload}
           className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
         >
-          Подготовить загрузку
+          {t("profile_edit_signature")}
         </button>
       ) : (
         /* 3) Если подпись есть — рендерим виджет с переданными параметрами */
@@ -112,7 +114,7 @@ export default function AvatarUploader({
               className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
               type="button"
             >
-              Загрузить
+              {t("profile_edit_upload")}
             </button>
           )}
         </CldUploadWidget>

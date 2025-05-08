@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import React from "react";
 
 export type SearchCategory = "interests" | "hobbies" | "music";
@@ -11,6 +12,7 @@ export default function SearchFilterTabs({
   currentCategory,
   onSelectCategory,
 }: SearchFilterTabsProps) {
+  const t = useTranslations("");
   return (
     <div className="flex space-x-4">
       <button
@@ -21,7 +23,7 @@ export default function SearchFilterTabs({
             : "bg-gray-200 text-gray-800"
         }`}
       >
-        По интересам
+        {t("search_button_interests")}
       </button>
       <button
         onClick={() => onSelectCategory("hobbies")}
@@ -31,7 +33,7 @@ export default function SearchFilterTabs({
             : "bg-gray-200 text-gray-800"
         }`}
       >
-        По хобби
+        {t("search_button_hobbys")}
       </button>
       <button
         onClick={() => onSelectCategory("music")}
@@ -41,7 +43,7 @@ export default function SearchFilterTabs({
             : "bg-gray-200 text-gray-800"
         }`}
       >
-        По музыкальному вкусу
+        {t("search_button_musics")}
       </button>
     </div>
   );

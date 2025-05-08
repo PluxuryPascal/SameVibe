@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 
 interface ChatCardProps {
   chatName: string;
@@ -17,6 +18,8 @@ export default function ChatCard({
   avatar,
   isOther = false,
 }: ChatCardProps) {
+  const t = useTranslations("");
+
   return (
     <div className="flex items-center p-4 bg-white rounded shadow hover:bg-gray-50 transition-colors">
       <div className="relative w-12 h-12 flex-shrink-0">
@@ -33,7 +36,7 @@ export default function ChatCard({
         <p
           className={`truncate ${isOther ? "text-blue-600" : "text-gray-600"}`}
         >
-          {isOther ? `${chatName}: ` : "Вы: "}
+          {isOther ? `${chatName}: ` : t("chat_you")}
           {lastMessage}
         </p>
       </div>

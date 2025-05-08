@@ -5,6 +5,7 @@ import api from "src/shared/lib/axios";
 import AttachmentUploader from "./AttachmentUploader";
 import Image from "next/image";
 import { Modal, Button } from "react-bootstrap";
+import { useTranslations } from "next-intl";
 
 // Интерфейс сообщения
 interface Message {
@@ -27,6 +28,7 @@ const validVideoTypes = ["mp4", "webm", "avi"];
 export default function ChatWindow({ chatId }: ChatWindowProps) {
   const qc = useQueryClient();
   const bottomRef = useRef<HTMLDivElement>(null);
+  const t = useTranslations("");
 
   // Получаем сообщения чата
   const { data: msgs = [] } = useQuery<Message[]>({
@@ -125,7 +127,7 @@ export default function ChatWindow({ chatId }: ChatWindowProps) {
       d.getMonth() === now.getMonth() &&
       d.getFullYear() === now.getFullYear()
     ) {
-      label = "Сегодня";
+      label = t("chat_today");
     } else {
       const yesterday = new Date(now);
       yesterday.setDate(now.getDate() - 1);
@@ -134,7 +136,7 @@ export default function ChatWindow({ chatId }: ChatWindowProps) {
         d.getMonth() === yesterday.getMonth() &&
         d.getFullYear() === yesterday.getFullYear()
       ) {
-        label = "Вчера";
+        label = t("chat_yesterday");
       } else {
         label = d.toLocaleDateString();
       }
@@ -162,7 +164,7 @@ export default function ChatWindow({ chatId }: ChatWindowProps) {
     if (validVideoTypes.includes(extension || "")) {
       return (
         <video src={attachment} controls className="max-w-full h-auto rounded">
-          Ваш браузер не поддерживает видео.
+          {t("chat_error_browser")}
         </video>
       );
     }
@@ -177,7 +179,7 @@ export default function ChatWindow({ chatId }: ChatWindowProps) {
           rel="noopener noreferrer"
           className="text-blue-600 underline"
         >
-          Скачать файл
+          {t("chat_download")}
         </a>
         🗎
       </div>
@@ -211,7 +213,7 @@ export default function ChatWindow({ chatId }: ChatWindowProps) {
                     <div className="flex items-center justify-between gap-x-4">
                       <span className="font-semibold">
                         {isMe
-                          ? "Вы"
+                          ? t("chat_you")
                           : `${m.sender_info.first_name} ${m.sender_info.last_name}`}
                       </span>
                       {isMe && !isEditing && (
@@ -246,7 +248,7 @@ export default function ChatWindow({ chatId }: ChatWindowProps) {
                             setEditingId(null);
                           }}
                         >
-                          Сохранить
+                          {t("profile_edit_button_save")}
                         </button>
                       </>
                     ) : (
@@ -288,7 +290,7 @@ export default function ChatWindow({ chatId }: ChatWindowProps) {
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={handleCloseModal}>
-            Закрыть
+            {t("chat_modal_close")}
           </Button>
         </Modal.Footer>
       </Modal>
@@ -310,13 +312,13 @@ export default function ChatWindow({ chatId }: ChatWindowProps) {
           rows={1}
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="Введите сообщение..."
+          placeholder={t("chat_placeholder")}
         />
         <button
           type="submit"
           className="px-4 bg-blue-500 text-white rounded-r hover:bg-blue-600 transition-colors"
         >
-          Отправить
+          {t("chat_button_send")}
         </button>
       </form>
     </div>

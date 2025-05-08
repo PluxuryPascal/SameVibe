@@ -1,5 +1,6 @@
 import React from "react";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 
 interface Props {
   name: string;
@@ -22,6 +23,7 @@ export default function SearchResultCard({
   onAccept,
   onWrite,
 }: Props) {
+  const t = useTranslations("");
   return (
     <div className="flex items-center bg-white p-4 rounded shadow mb-4">
       <Image
@@ -41,22 +43,22 @@ export default function SearchResultCard({
             onClick={onAddFriend}
             className="text-blue-500 hover:underline"
           >
-            Добавить
+            {t("search_button_add")}
           </button>
         )}
         {status === "incoming" && (
           <button onClick={onAccept} className="text-blue-500 hover:underline">
-            Принять
+            {t("search_button_accept")}
           </button>
         )}
         {status === "outgoing" && (
           <button onClick={onCancel} className="text-red-500 hover:underline">
-            Отменить заявку
+            {t("search_button_cancel")}
           </button>
         )}
         {status === "accepted" && (
           <button onClick={onWrite} className="text-blue-500 hover:underline">
-            Написать
+            {t("search_button_write")}
           </button>
         )}
       </div>

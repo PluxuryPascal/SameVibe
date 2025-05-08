@@ -18,6 +18,7 @@
     "auth_login_button": "Войти",
     "auth_login_no_account": "Нет аккаунта?",
     "auth_login_go_register": "Зарегистрироваться",
+    "auth_login_pending": "Вход...",
   
     "auth_register_title": "Регистрация",
     "auth_register_username": "Логин",
@@ -48,19 +49,28 @@
     "auth_register_error_generic": "Ошибка при регистрации",
   
     "choose_continue": "Продолжить",
-    "choose_hobbies_title": "",
-    "choose_interests_title": "",
-    "choose_music_title": "",
+    "choose_hobbies_title": "Выберите ваши хобби",
+    "choose_hobbies_error": "Ошибка при сохранении хобби:",
+    "choose_interests_title": "Выберите ваши интересы",
+    "choose_interests_error": "Ошибка при сохранении интересов:",
+    "choose_music_title": "Выберите ваш музыкальный вкус",
+    "choose_music_error": "Ошибка при сохранении музыкальных жанров:",
   
     "search_query_placeholder": "Введите запрос",
     "search_filter_gender_all": "Пол: все",
     "search_filter_gender_male": "Пол: мужской",
     "search_filter_gender_female": "Пол: женский",
-    "search_description": "Совместимость: {{percentage}}%",
+    "search_description": "Совместимость:",
     "search_button_add": "Добавить",
     "search_button_accept": "Принять",
     "search_button_cancel": "Отменить заявку",
     "search_button_write": "Написать",
+    "search_button_interests": "По интересам",
+    "search_button_hobbys": "По хобби",
+    "search_button_musics": " По музыкальному вкусу",
+    "search_title": "Поиск людей",
+    "search_label": "Найти пользователя",
+    "search_placeholder": "Введите имя или фамилию",
   
     "friends_title": "Друзья",
     "friends_tab_received": "Входящие заявки",
@@ -73,14 +83,21 @@
     "friends_button_cancel": "Отменить заявку",
     "friends_button_write": "Написать",
     "friends_button_remove": "Удалить из друзей",
+    "friends_button_reject": "Отклонить",
   
     "chats_title": "Чаты",
     "chats_empty": "Выберите чат",
     "chats_loading": "Загрузка...",
   
-    "chat_placeholder": "Введите сообщение.",
+    "chat_placeholder": "Введите сообщение...",
     "chat_button_send": "Отправить",
     "chat_modal_close": "Закрыть",
+    "chat_search_placeholder": "Поиск чатов...",
+    "chat_you": "Вы: ",
+    "chat_today": "Сегодня",
+    "chat_yesterday": "Вчера",
+    "chat_error_browser": "Ваш браузер не поддерживает видео.",
+    "chat_download": "Скачать файл",
   
     "profile_edit_title": "Редактировать профиль",
     "profile_edit_gender_label": "Пол",
@@ -88,10 +105,24 @@
     "profile_edit_gender_male": "Мужской",
     "profile_edit_gender_female": "Женский",
     "profile_edit_button_save": "Сохранить изменения",
-    "profile_edit_button_saving": "Сохранение.",
+    "profile_edit_button_saving": "Сохранение...",
+    "profile_edit_saved": "Изменения сохранены",
+    "profile_edit_signature": "Подготовить загрузку",
+    "profile_edit_upload": "Загрузить",
+
+
+
+    "profile_interests": "Интересы:",
+    "profile_hobbies": "Хобби:",
+    "profile_musics": "Музыкальные жанры:",
+    "profile_edit_button": "Редактировать профиль",
+    "profile_logout": "Выйти",
+  
+  
   
     "settings_title": "Настройки",
     "settings_language_label": "Язык интерфейса",
+    "settings_language_saved": "Настройки сохранены:",
   
     "help_title": "Помощь",
     "help_faq_question_edit_profile": "Как изменить профиль?",

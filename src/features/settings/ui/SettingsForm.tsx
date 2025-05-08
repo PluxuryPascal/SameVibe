@@ -3,10 +3,12 @@
 import React, { useState } from "react";
 import { useRouter } from "src/i18n/navigation";
 import Button from "src/components/ui/Button";
+import { useTranslations } from "next-intl";
 
 export default function SettingsForm() {
   const router = useRouter();
   const [language, setLanguage] = useState("ru");
+  const t = useTranslations("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,7 +21,7 @@ export default function SettingsForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <label htmlFor="language" className="block mb-1 font-medium">
-        Язык интерфейса
+        {t("settings_language_label")}
       </label>
       <select
         id="language"
@@ -32,7 +34,7 @@ export default function SettingsForm() {
         <option value="es">Español</option>
         <option value="de">Deutsch</option>
       </select>
-      <Button type="submit">Сохранить настройки</Button>
+      <Button type="submit">{t("profile_edit_button_save")}</Button>
     </form>
   );
 }
