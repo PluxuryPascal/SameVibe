@@ -9,6 +9,7 @@ import AvatarUploader from "src/features/profile/ui/AvatarUploader";
 import InputField from "src/components/ui/InputField";
 import Button from "src/components/ui/Button";
 import { useTranslations } from "next-intl";
+import Link from "next/link";
 
 interface ProfileData {
   user: {
@@ -239,6 +240,35 @@ export default function EditProfilePage() {
               <option value="female">{t("profile_edit_gender_female")}</option>
             </select>
           </div>
+        </div>
+
+        {/* Ссылки для изменения выбора */}
+        <div className="mb-4">
+          <p className="text-gray-700 mb-2">Музыкальные вкусы</p>
+          <Link
+            href="/choose/music?origin=profile"
+            className="text-blue-500 hover:underline"
+          >
+            Изменить музыкальные вкусы
+          </Link>
+        </div>
+        <div className="mb-4">
+          <p className="text-gray-700 mb-2">Хобби</p>
+          <Link
+            href="/choose/hobbies?origin=profile"
+            className="text-blue-500 hover:underline"
+          >
+            Изменить хобби
+          </Link>
+        </div>
+        <div className="mb-4">
+          <p className="text-gray-700 mb-2">Интересы</p>
+          <Link
+            href="/choose/interests?origin=profile"
+            className="text-blue-500 hover:underline"
+          >
+            Изменить интересы
+          </Link>
         </div>
 
         <div className="flex justify-end mt-6">
