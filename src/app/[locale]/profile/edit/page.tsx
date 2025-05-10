@@ -244,30 +244,36 @@ export default function EditProfilePage() {
 
         {/* Ссылки для изменения выбора */}
         <div className="mb-4">
-          <p className="text-gray-700 mb-2">Музыкальные вкусы</p>
+          <p className="text-gray-700 mb-2">
+            {t("profile_edit_rechoose_music")}
+          </p>
           <Link
             href="/choose/music?origin=profile"
             className="text-blue-500 hover:underline"
           >
-            Изменить музыкальные вкусы
+            {t("profile_edit_rechoose_music_button")}
           </Link>
         </div>
         <div className="mb-4">
-          <p className="text-gray-700 mb-2">Хобби</p>
+          <p className="text-gray-700 mb-2">
+            {t("profile_edit_rechoose_hobby")}
+          </p>
           <Link
             href="/choose/hobbies?origin=profile"
             className="text-blue-500 hover:underline"
           >
-            Изменить хобби
+            {t("profile_edit_rechoose_hobb_button")}
           </Link>
         </div>
         <div className="mb-4">
-          <p className="text-gray-700 mb-2">Интересы</p>
+          <p className="text-gray-700 mb-2">
+            {t("profile_edit_rechoose_interest")}
+          </p>
           <Link
             href="/choose/interests?origin=profile"
             className="text-blue-500 hover:underline"
           >
-            Изменить интересы
+            {t("profile_edit_rechoose_interest_button")}
           </Link>
         </div>
 

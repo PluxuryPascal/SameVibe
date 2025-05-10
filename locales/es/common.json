@@ -109,6 +109,12 @@
     "profile_edit_saved": "Cambios guardados",
     "profile_edit_signature": "Preparar la descarga",
     "profile_edit_upload": "Descargar",
+    "profile_edit_rechoose_interest":"Intereses",
+    "profile_edit_rechoose_hobby":"Hobby",
+    "profile_edit_rechoose_music": "gustos Musicales",
+    "profile_edit_rechoose_interest_button": "Cambiar intereses",
+    "profile_edit_rechoose_hobb_button": "Cambiar aficiones",
+    "profile_edit_rechoose_music_button": "Cambiar gustos musicales",
 
 
     "profile_interests": "Intereses:",

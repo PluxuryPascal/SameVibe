@@ -109,6 +109,12 @@
     "profile_edit_saved": "The changes are saved",
     "profile_edit_signature": "Prepare upload",
     "profile_edit_upload": "Upload",
+    "profile_edit_rechoose_interest": "Interests",
+    "profile_edit_rechoose_hobby": "Hobbies",
+    "profile_edit_rechoose_music": "Musical tastes",
+    "profile_edit_rechoose_interest_button": "Change interests",
+    "profile_edit_rechoose_hobb_button": "Change hobbies",
+    " profile_edit_rechoose_music_button": "Change musical tastes",
 
 
     "profile_interests": "Interests:",

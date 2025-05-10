@@ -109,6 +109,12 @@
     "profile_edit_saved": "Änderungen gespeichert",
     "profile_edit_signature": "Download vorbereiten",
     "profile_edit_upload": "Herunterladen",
+    "profile_edit_rechoose_interest": "Interessen",
+    "profile_edit_rechoose_hobby": "Hobby",
+    "profile_edit_rechoose_music": "Musikgeschmack",
+    "profile_edit_rechoose_interest_button": "Interessen ändern",
+    "profile_edit_rechoose_hobb_button": "Hobby ändern",
+    "profile_edit_rechoose_music_button": "Musikgeschmack ändern",
 
 
     "profile_interests": "Interessen:",
