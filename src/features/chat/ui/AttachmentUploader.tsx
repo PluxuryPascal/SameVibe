@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useRef, useState, useEffect, useCallback } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { CldUploadWidget, CldUploadWidgetProps } from "next-cloudinary";
-import { fetchAttachmentSignature, SignatureParams } from "../api/signature";
+import { fetchAttachmentSignature } from "../api/signature";
 
 interface AttachmentUploaderProps {
   chatId: number;
@@ -83,7 +83,7 @@ export default function AttachmentUploader({
             const { signature, timestamp, folder } =
               await fetchAttachmentSignature(chatId);
             callback({ signature, timestamp, folder });
-          } catch (err) {
+          } catch {
             onUploadError("Не удалось получить подпись");
           }
         }}

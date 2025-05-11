@@ -285,7 +285,11 @@ export default function ChatWindow({ chatId }: ChatWindowProps) {
       >
         <Modal.Body className="p-0">
           {modalImage && (
-            <img src={modalImage} alt="Full screen" className="w-100 h-auto" />
+            <Image
+              src={modalImage}
+              alt="Full screen"
+              className="w-100 h-auto"
+            />
           )}
         </Modal.Body>
         <Modal.Footer>
