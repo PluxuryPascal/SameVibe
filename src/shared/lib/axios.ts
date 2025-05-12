@@ -1,7 +1,9 @@
 import axios from "axios";
 
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
 const api = axios.create({
-  baseURL: "http://127.0.0.1:8000/api/v1",
+  baseURL: `${BASE_URL}/api/v1`,
   headers: {
     "Content-Type": "application/json",
   },
@@ -19,7 +21,7 @@ api.interceptors.response.use(
       // Получаем refresh-токен
       const refreshToken = localStorage.getItem("refreshToken");
       try {
-        const response = await axios.post("http://127.0.0.1:8000/api/v1/token/refresh/", { refresh: refreshToken });
+        const response = await axios.post(`${BASE_URL}/api/v1/token/refresh/`, { refresh: refreshToken });
         const newAccessToken = response.data.access;
         localStorage.setItem("accessToken", newAccessToken);
         originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
