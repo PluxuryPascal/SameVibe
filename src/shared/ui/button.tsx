@@ -1,5 +1,4 @@
-// src/shared/ui/Button.tsx
-"use client"; // <-- Добавляем директиву
+"use client";
 
 import { FC } from "react";
 

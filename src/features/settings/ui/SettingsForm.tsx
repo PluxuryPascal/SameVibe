@@ -10,12 +10,13 @@ export default function SettingsForm() {
   const [language, setLanguage] = useState("ru");
   const t = useTranslations("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Настройки сохранены:", { language });
 
     // router.push автоматически учитывает текущий pathname и locale
-    router.push("/settings", { locale: language });
+    await router.push("/settings", { locale: language });
+    router.refresh();
   };
 
   return (
