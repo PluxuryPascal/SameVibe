@@ -123,7 +123,7 @@ export default function ProfileCard() {
       </div>
 
       <div className="mt-6 flex w-full justify-around">
-        <Link href="/profile/edit">
+        <Link className="mt-6 flex w-full justify-around" href="/profile/edit">
           <Button>{t("profile_edit_button")}</Button>
         </Link>
       </div>
