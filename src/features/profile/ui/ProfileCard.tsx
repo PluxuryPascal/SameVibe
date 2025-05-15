@@ -122,7 +122,7 @@ export default function ProfileCard() {
         <p className="mt-1 text-gray-700">{joinNames(musicGenres)}</p>
       </div>
 
-      <div className="mt-6 flex justify-around">
+      <div className="mt-6 flex w-full justify-around">
         <Link href="/profile/edit">
           <Button>{t("profile_edit_button")}</Button>
         </Link>
